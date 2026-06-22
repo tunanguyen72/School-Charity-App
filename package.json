@@ -1,0 +1,10 @@
+{
+  "name": "cung-em-den-truong",
+  "private": true,
+  "description": "Cùng em đến trường — web + API chạy chung 1 dịch vụ (deploy lên Render)",
+  "scripts": {
+    "install:all": "npm --prefix server install && npm --prefix app install",
+    "build": "npm run install:all && npm --prefix app run build && npm --prefix server run prisma:deploy",
+    "start": "npm --prefix server start"
+  }
+}

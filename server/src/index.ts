@@ -1,6 +1,9 @@
 import express, { type Request } from 'express'
 import cors from 'cors'
 import bcrypt from 'bcryptjs'
+import path from 'node:path'
+import fs from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { db } from './db.js'
 import { signToken, requireAuth, requireRole, type AuthUser } from './auth.js'
 
@@ -263,5 +266,18 @@ app.post('/api/expenses/:id/reject', requireAuth, requireRole('admin'), async (r
   res.json(e)
 })
 
-const PORT = 4000
-app.listen(PORT, () => console.log(`🚀 API "Cùng em đến trường" chạy tại http://localhost:${PORT}`))
+// ===== Phục vụ bản build frontend (cùng origin với API) =====
+const distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../app/dist')
+const indexHtml = path.join(distDir, 'index.html')
+if (fs.existsSync(indexHtml)) {
+  app.use(express.static(distDir))
+  // SPA fallback: route không phải /api và không phải file tĩnh -> trả index.html
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) return res.sendFile(indexHtml)
+    next()
+  })
+  console.log('📦 Đang phục vụ frontend từ', distDir)
+}
+
+const PORT = Number(process.env.PORT) || 4000
+app.listen(PORT, () => console.log(`🚀 "Cùng em đến trường" chạy tại http://localhost:${PORT}`))

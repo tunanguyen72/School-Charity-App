@@ -1,0 +1,16 @@
+{
+  "name": "Cùng em đến trường",
+  "short_name": "Cùng em",
+  "description": "Nền tảng quyên góp giáo dục minh bạch",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1220",
+  "theme_color": "#1f4fe0",
+  "lang": "vi",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

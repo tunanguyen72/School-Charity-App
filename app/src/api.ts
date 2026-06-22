@@ -1,5 +1,7 @@
 // ====== API client: nối frontend với backend Express ======
-const BASE = 'http://localhost:4000/api'
+// Mặc định gọi cùng origin ('/api') — chạy được cho cả dev (qua proxy Vite),
+// bản build do Express phục vụ, lẫn khi deploy/tunnel. Có thể override bằng VITE_API_URL.
+const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
 const TOKEN_KEY = 'cedt_token'
 export const getToken = () => localStorage.getItem(TOKEN_KEY)

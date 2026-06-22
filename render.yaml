@@ -1,0 +1,13 @@
+# Cấu hình deploy 1-dịch-vụ cho Render (web + API chung origin)
+services:
+  - type: web
+    name: cung-em-den-truong
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NPM_CONFIG_PRODUCTION   # để cài cả devDependencies khi build (vite, tsx, prisma...)
+        value: "false"
+      - key: NODE_VERSION
+        value: "20"
