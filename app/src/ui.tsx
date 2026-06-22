@@ -17,11 +17,11 @@ export function ErrorBox({ message }: { message: string }) {
 
 type BtnVariant = 'primary' | 'ghost' | 'soft' | 'success' | 'white'
 const btnStyles: Record<BtnVariant, string> = {
-  primary: 'bg-brand-600 text-white shadow-lg shadow-brand-600/25 active:scale-[.98]',
+  primary: 'bg-gradient-to-b from-brand-500 to-brand-600 text-white shadow-[0_6px_16px_-4px_rgba(31,79,224,.5)] active:scale-[.98]',
   ghost: 'bg-white text-brand-700 border border-brand-200 active:bg-brand-50',
   soft: 'bg-brand-50 text-brand-700 active:bg-brand-100',
-  success: 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 active:scale-[.98]',
-  white: 'bg-white text-brand-700 shadow active:scale-[.98]',
+  success: 'bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_6px_16px_-4px_rgba(16,163,74,.5)] active:scale-[.98]',
+  white: 'bg-white text-brand-700 shadow-md active:scale-[.98]',
 }
 
 export function Button({
@@ -39,7 +39,7 @@ export function Button({
 
 export function Card({ children, className = '', ...rest }: { children: ReactNode; className?: string } & React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div {...rest} className={`bg-white rounded-3xl p-4 shadow-sm shadow-slate-200/70 ${className}`}>
+    <div {...rest} className={`bg-white rounded-3xl p-4 border border-slate-100 shadow-soft ${className}`}>
       {children}
     </div>
   )

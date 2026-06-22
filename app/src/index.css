@@ -26,7 +26,16 @@ body {
   background: #0b1220;
   margin: 0;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;   /* số canh đều — gọn gàng kiểu app tài chính */
+  text-rendering: optimizeLegibility;
 }
+
+/* Đồng nhất font: chữ trong SVG (biểu đồ) dùng cùng font với toàn app */
+svg text { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+
+/* Đổ bóng cao cấp dùng chung */
+.shadow-soft { box-shadow: 0 2px 8px -2px rgba(16,24,40,.06), 0 12px 28px -14px rgba(16,24,40,.12); }
 
 /* hide scrollbars inside the phone but keep scroll */
 .no-scrollbar::-webkit-scrollbar { display: none; }

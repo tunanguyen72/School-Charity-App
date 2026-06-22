@@ -1,5 +1,5 @@
 import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { Home, LayoutGrid, Heart, Package, ScrollText, CreditCard, User, LayoutDashboard } from 'lucide-react'
+import { Home, LayoutGrid, Heart, Package, ScrollText, CreditCard, User, LayoutDashboard, Signal, Wifi, BatteryFull } from 'lucide-react'
 import { useApp } from './store'
 import type { Role } from './data'
 import type { ComponentType } from 'react'
@@ -35,6 +35,19 @@ const isNoNav = (p: string) =>
   noNav.includes(p) || p.startsWith('/donate') || p.startsWith('/inventory/distribute') || p.startsWith('/transaction/')
 
 const roleLabels: Record<Role, string> = { donor: 'Nhà hảo tâm', tnv: 'Tình nguyện viên', admin: 'Admin' }
+
+function StatusBar() {
+  return (
+    <div className="relative shrink-0 h-11 bg-white flex items-end justify-between px-6 pb-1.5 z-40">
+      <span className="text-[13px] font-bold text-slate-900">9:41</span>
+      <span className="flex items-center gap-1.5 text-slate-900">
+        <Signal className="w-[15px] h-[15px]" />
+        <Wifi className="w-[15px] h-[15px]" />
+        <BatteryFull className="w-[22px] h-[22px]" />
+      </span>
+    </div>
+  )
+}
 
 function BottomNav() {
   const { role } = useApp()
@@ -105,9 +118,10 @@ export default function Shell() {
       </div>
 
       {/* Phone */}
-      <div className="relative w-[400px] max-w-[96vw] h-[820px] max-h-[86vh] bg-slate-100 rounded-[42px] border-[11px] border-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-7 bg-slate-900 rounded-b-2xl z-50" />
-        <div className="h-full overflow-y-auto no-scrollbar" style={{ paddingBottom: hideNav ? 0 : 78 }}>
+      <div className="relative w-[400px] max-w-[96vw] h-[820px] max-h-[86vh] bg-slate-50 rounded-[44px] border-[11px] border-slate-900 shadow-[0_30px_70px_-20px_rgba(0,0,0,.7)] overflow-hidden flex flex-col ring-1 ring-white/10">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-[26px] bg-slate-900 rounded-b-2xl z-50" />
+        {pathname !== '/pay' && <StatusBar />}
+        <div className="flex-1 overflow-y-auto no-scrollbar" style={{ paddingBottom: hideNav ? 0 : 78 }}>
           {redirect ? <Navigate to={redirect} replace /> : <Outlet />}
         </div>
         {!hideNav && !redirect && <BottomNav />}
