@@ -15,6 +15,7 @@ interface AppState {
   user: ApiUser | null
   role: Role
   login: (email: string, password: string) => Promise<void>
+  register: (fullName: string, email: string, password: string) => Promise<void>
   quickLogin: (role: Role) => Promise<void>
   logout: () => void
   draft: DonationDraft
@@ -50,6 +51,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const { token, user } = await api.login(email, password)
     applyAuth(token, user)
   }
+  const register = async (fullName: string, email: string, password: string) => {
+    const { token, user } = await api.register(fullName, email, password)
+    applyAuth(token, user)
+  }
   const quickLogin = async (role: Role) => {
     const { token, user } = await api.login(DEMO[role], '123456')
     applyAuth(token, user)
@@ -63,7 +68,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setDraft = (d: Partial<DonationDraft>) => setDraftState((prev) => ({ ...prev, ...d }))
 
   return (
-    <Ctx.Provider value={{ user, role: (user?.role as Role) ?? 'donor', login, quickLogin, logout, draft, setDraft }}>
+    <Ctx.Provider value={{ user, role: (user?.role as Role) ?? 'donor', login, register, quickLogin, logout, draft, setDraft }}>
       {children}
     </Ctx.Provider>
   )

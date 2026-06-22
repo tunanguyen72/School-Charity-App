@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Home, LayoutGrid, Heart, Package, ScrollText, CreditCard, User, LayoutDashboard } from 'lucide-react'
 import { useApp } from './store'
 import type { Role } from './data'
@@ -32,7 +32,7 @@ const navs: Record<Role, NavItem[]> = {
 
 const noNav = ['/', '/qr', '/pay', '/success', '/inventory/receive']
 const isNoNav = (p: string) =>
-  noNav.includes(p) || p.startsWith('/inventory/distribute') || p.startsWith('/transaction/')
+  noNav.includes(p) || p.startsWith('/donate') || p.startsWith('/inventory/distribute') || p.startsWith('/transaction/')
 
 const roleLabels: Record<Role, string> = { donor: 'Nhà hảo tâm', tnv: 'Tình nguyện viên', admin: 'Admin' }
 
@@ -41,8 +41,14 @@ function BottomNav() {
   const nav = useNavigate()
   const { pathname } = useLocation()
   const items = navs[role]
-  const active = (p: string) =>
-    p === pathname || (p !== '/home' && pathname.startsWith(p.split('/').slice(0, 2).join('/')) && p.includes(pathname.split('/')[1]))
+  const active = (p: string) => {
+    if (p === '/home') return pathname === '/home'
+    if (p === '/campaigns') return pathname === '/campaigns'
+    if (p.startsWith('/campaign/')) return pathname.startsWith('/campaign/') || pathname.startsWith('/donate')
+    if (p === '/inventory') return pathname.startsWith('/inventory')
+    if (p === '/transactions') return pathname.startsWith('/transaction')
+    return pathname === p
+  }
 
   return (
     <nav className="absolute bottom-0 inset-x-0 h-[70px] bg-white border-t border-slate-100 flex items-center justify-around px-1 z-30">
@@ -70,10 +76,13 @@ function BottomNav() {
 }
 
 export default function Shell() {
-  const { role, quickLogin } = useApp()
+  const { user, role, quickLogin } = useApp()
   const nav = useNavigate()
   const { pathname } = useLocation()
   const hideNav = isNoNav(pathname)
+
+  // Chốt chặn điều hướng theo trạng thái đăng nhập
+  const redirect = !user && pathname !== '/' ? '/' : user && pathname === '/' ? '/home' : null
 
   const switchRole = async (r: Role) => {
     await quickLogin(r)
@@ -99,9 +108,9 @@ export default function Shell() {
       <div className="relative w-[400px] max-w-[96vw] h-[820px] max-h-[86vh] bg-slate-100 rounded-[42px] border-[11px] border-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-7 bg-slate-900 rounded-b-2xl z-50" />
         <div className="h-full overflow-y-auto no-scrollbar" style={{ paddingBottom: hideNav ? 0 : 78 }}>
-          <Outlet />
+          {redirect ? <Navigate to={redirect} replace /> : <Outlet />}
         </div>
-        {!hideNav && <BottomNav />}
+        {!hideNav && !redirect && <BottomNav />}
       </div>
     </div>
   )
