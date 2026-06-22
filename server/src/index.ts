@@ -70,6 +70,63 @@ app.get('/api/summary', async (_req, res) => {
   })
 })
 
+// --- Thống kê / Báo cáo (số liệu tổng hợp) ---
+app.get('/api/stats', requireAuth, async (_req, res) => {
+  const [campaigns, successDonations, verifiedExpenses, inkind, schools] = await Promise.all([
+    db.campaign.findMany(),
+    db.donation.findMany({ where: { status: 'success' }, select: { amount: true, confirmedAt: true, donorId: true } }),
+    db.expense.findMany({ where: { status: 'verified' }, select: { amount: true } }),
+    db.inkindBatch.aggregate({ _sum: { quantityTotal: true, quantityRemaining: true } }),
+    db.beneficiary.count(),
+  ])
+
+  const n = (b: bigint) => Number(b)
+  const totalRaised = campaigns.reduce((s, c) => s + n(c.raisedAmount), 0)
+  const totalDisbursed = verifiedExpenses.reduce((s, e) => s + n(e.amount), 0)
+  const donorIds = new Set(successDonations.map((d) => d.donorId))
+  const donationCount = successDonations.length
+  const inkindTotal = inkind._sum.quantityTotal ?? 0
+  const inkindRemaining = inkind._sum.quantityRemaining ?? 0
+
+  // Biểu đồ theo tháng (2024, T1..T6)
+  const monthly = Array.from({ length: 6 }, (_, i) => ({ label: `T${i + 1}`, total: 0, count: 0 }))
+  for (const d of successDonations) {
+    if (!d.confirmedAt) continue
+    const dt = new Date(d.confirmedAt)
+    if (dt.getFullYear() === 2024) {
+      const m = dt.getMonth()
+      if (m < 6) { monthly[m].total += n(d.amount); monthly[m].count++ }
+    }
+  }
+
+  // Top nhà hảo tâm
+  const byDonor = await db.donation.groupBy({
+    by: ['donorId'], where: { status: 'success' },
+    _sum: { amount: true }, _count: true, orderBy: { _sum: { amount: 'desc' } }, take: 5,
+  })
+  const donorUsers = await db.user.findMany({ where: { id: { in: byDonor.map((d) => d.donorId) } }, select: { id: true, fullName: true } })
+  const nameOf = (id: number) => donorUsers.find((u) => u.id === id)?.fullName ?? 'Ẩn danh'
+  const topDonors = byDonor.map((d) => ({ name: nameOf(d.donorId), total: n(d._sum.amount ?? 0n), count: d._count }))
+
+  res.json({
+    overview: {
+      totalRaised, totalDisbursed, balance: totalRaised - totalDisbursed,
+      disbursementRate: totalRaised ? Math.round((totalDisbursed / totalRaised) * 100) : 0,
+      donationCount, donorCount: donorIds.size,
+      avgDonation: donationCount ? Math.round(totalRaised / donationCount) : 0,
+      childrenHelped: campaigns.reduce((s, c) => s + c.childrenHelped, 0),
+      schools, inkindTotal, inkindGiven: inkindTotal - inkindRemaining,
+      campaignsActive: campaigns.filter((c) => c.status !== 'done').length,
+      campaignsDone: campaigns.filter((c) => c.status === 'done').length,
+    },
+    monthly,
+    byCampaign: campaigns
+      .map((c) => ({ slug: c.slug, title: c.title, emoji: c.bannerEmoji, status: c.status, raised: n(c.raisedAmount), goal: n(c.goalAmount), donors: c.donorCount }))
+      .sort((a, b) => b.raised - a.raised),
+    topDonors,
+  })
+})
+
 // --- Chiến dịch ---
 app.get('/api/campaigns', async (req, res) => {
   const status = req.query.status as string | undefined

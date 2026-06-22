@@ -54,6 +54,7 @@ model Campaign {
   donorCount     Int      @default(0)
   inkindReceived Int      @default(0)
   inkindGiven    Int      @default(0)
+  childrenHelped Int      @default(0)
   startDate      DateTime?
   endDate        DateTime?
   bannerEmoji    String?

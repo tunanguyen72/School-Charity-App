@@ -16,6 +16,7 @@ import TransactionDetail from './screens/TransactionDetail'
 import Profile from './screens/Profile'
 import Notifications from './screens/Notifications'
 import Admin from './screens/Admin'
+import Stats from './screens/Stats'
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/stats" element={<Stats />} />
       </Route>
     </Routes>
   )

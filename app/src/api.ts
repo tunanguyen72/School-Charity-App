@@ -105,6 +105,8 @@ export const api = {
 
   myStats: () => request<{ totalDonated: string; donationCount: number; projectCount: number }>('/me/stats'),
 
+  stats: () => request<Stats>('/stats'),
+
   // ----- Quản trị (Admin) -----
   adminExpenses: () =>
     request<AdminExpense[]>('/expenses'),
@@ -119,4 +121,15 @@ export const api = {
 export interface AdminExpense {
   id: number; title: string; amount: string; type: string; status: string; createdAt: string
   campaign: { title: string }; submittedBy: { fullName: string }
+}
+
+export interface Stats {
+  overview: {
+    totalRaised: number; totalDisbursed: number; balance: number; disbursementRate: number
+    donationCount: number; donorCount: number; avgDonation: number; childrenHelped: number
+    schools: number; inkindTotal: number; inkindGiven: number; campaignsActive: number; campaignsDone: number
+  }
+  monthly: { label: string; total: number; count: number }[]
+  byCampaign: { slug: string; title: string; emoji: string | null; status: string; raised: number; goal: number; donors: number }[]
+  topDonors: { name: string; total: number; count: number }[]
 }
