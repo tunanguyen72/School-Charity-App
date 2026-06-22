@@ -1,0 +1,210 @@
+import express, { type Request } from 'express'
+import cors from 'cors'
+import bcrypt from 'bcryptjs'
+import { db } from './db.js'
+import { signToken, requireAuth, requireRole, type AuthUser } from './auth.js'
+
+const app = express()
+app.use(cors())
+app.use(express.json())
+
+const genTxn = () => 'CE-' + Math.floor(1_000_000 + Math.random() * 9_000_000)
+const currentUser = (req: Request) => (req as Request & { user: AuthUser }).user
+
+// ===== Xác thực =====
+app.post('/api/auth/register', async (req, res) => {
+  const { fullName, email, password } = req.body
+  if (!fullName || !email || !password) return res.status(400).json({ error: 'Thiếu thông tin' })
+  const existing = await db.user.findUnique({ where: { email } })
+  if (existing) return res.status(409).json({ error: 'Email đã được đăng ký' })
+  const user = await db.user.create({
+    data: { fullName, email, passwordHash: bcrypt.hashSync(password, 10), role: 'donor' },
+  })
+  const auth: AuthUser = { id: user.id, email: user.email, role: user.role, fullName: user.fullName }
+  res.json({ token: signToken(auth), user: auth })
+})
+
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body
+  const user = await db.user.findUnique({ where: { email } })
+  if (!user || !user.passwordHash || !bcrypt.compareSync(password, user.passwordHash))
+    return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng' })
+  const auth: AuthUser = { id: user.id, email: user.email, role: user.role, fullName: user.fullName }
+  res.json({ token: signToken(auth), user: auth })
+})
+
+app.get('/api/auth/me', requireAuth, (req, res) => {
+  res.json(currentUser(req))
+})
+
+// Thông báo của người dùng hiện tại
+app.get('/api/notifications', requireAuth, async (req, res) => {
+  res.json(await db.notification.findMany({ where: { userId: currentUser(req).id }, orderBy: { createdAt: 'desc' } }))
+})
+
+// Thống kê đóng góp của tôi (cho màn Hồ sơ)
+app.get('/api/me/stats', requireAuth, async (req, res) => {
+  const uid = currentUser(req).id
+  const sum = await db.donation.aggregate({ _sum: { amount: true }, _count: true, where: { donorId: uid, status: 'success' } })
+  const projects = await db.donation.findMany({ where: { donorId: uid, status: 'success' }, distinct: ['campaignId'], select: { campaignId: true } })
+  res.json({ totalDonated: sum._sum.amount ?? 0n, donationCount: sum._count, projectCount: projects.length })
+})
+
+// --- Health ---
+app.get('/api/health', async (_req, res) => {
+  const [users, campaigns, donations] = await Promise.all([db.user.count(), db.campaign.count(), db.donation.count()])
+  res.json({ ok: true, counts: { users, campaigns, donations } })
+})
+
+// --- Tổng quan quỹ (dashboard) ---
+app.get('/api/summary', async (_req, res) => {
+  // Tổng quỹ = cộng dồn raisedAmount của các chiến dịch (khớp với card chiến dịch)
+  const raised = await db.campaign.aggregate({ _sum: { raisedAmount: true } })
+  const disbursed = await db.expense.aggregate({ _sum: { amount: true }, where: { status: 'verified' } })
+  const inkind = await db.inkindBatch.aggregate({ _sum: { quantityTotal: true } })
+  res.json({
+    totalRaised: raised._sum.raisedAmount ?? 0n,
+    disbursed: disbursed._sum.amount ?? 0n,
+    inkindSets: inkind._sum.quantityTotal ?? 0,
+    projects: await db.campaign.count(),
+  })
+})
+
+// --- Chiến dịch ---
+app.get('/api/campaigns', async (req, res) => {
+  const status = req.query.status as string | undefined
+  const campaigns = await db.campaign.findMany({
+    where: status && status !== 'all' ? { status } : undefined,
+    orderBy: { createdAt: 'desc' },
+  })
+  res.json(campaigns)
+})
+
+app.get('/api/campaigns/:slug', async (req, res) => {
+  const c = await db.campaign.findUnique({
+    where: { slug: req.params.slug },
+    include: {
+      milestones: { orderBy: { orderIndex: 'asc' } },
+      donations: { where: { status: 'success' }, orderBy: { confirmedAt: 'desc' }, include: { donor: true } },
+      expenses: { where: { status: 'verified' } },
+    },
+  })
+  if (!c) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
+  res.json(c)
+})
+
+// --- Quyên góp: tạo (pending) → trả QR/mã giao dịch ---
+app.post('/api/donations', requireAuth, async (req, res) => {
+  const { campaignSlug, amount, message, isAnonymous } = req.body
+  const campaign = await db.campaign.findUnique({ where: { slug: campaignSlug } })
+  if (!campaign) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
+  const donation = await db.donation.create({
+    data: {
+      txnCode: genTxn(), campaignId: campaign.id, donorId: currentUser(req).id,
+      amount: BigInt(amount), message, isAnonymous: !!isAnonymous, status: 'pending',
+    },
+  })
+  res.json(donation)
+})
+
+// --- Xác nhận thanh toán (trang QR giả lập gọi về) ---
+app.post('/api/donations/:txnCode/confirm', async (req, res) => {
+  const donation = await db.donation.findUnique({ where: { txnCode: req.params.txnCode } })
+  if (!donation) return res.status(404).json({ error: 'Không tìm thấy giao dịch' })
+  if (donation.status === 'success') return res.json(donation)
+
+  const updated = await db.$transaction(async (tx) => {
+    const d = await tx.donation.update({ where: { id: donation.id }, data: { status: 'success', confirmedAt: new Date() } })
+    await tx.campaign.update({
+      where: { id: donation.campaignId },
+      data: { raisedAmount: { increment: donation.amount }, donorCount: { increment: 1 } },
+    })
+    await tx.notification.create({
+      data: { userId: donation.donorId, type: 'donation_success', title: 'Quyên góp thành công', body: `Cảm ơn bạn đã đóng góp ${donation.amount.toString()}đ.` },
+    })
+    return d
+  })
+  res.json(updated)
+})
+
+// --- Kho hiện vật ---
+app.get('/api/inventory', async (_req, res) => {
+  res.json(await db.inkindBatch.findMany({ orderBy: { receivedAt: 'desc' } }))
+})
+
+// --- Sổ quỹ (hợp nhất quyên góp + giải ngân + hiện vật) ---
+app.get('/api/ledger', async (_req, res) => {
+  const [donations, expenses, inkind] = await Promise.all([
+    db.donation.findMany({ where: { status: 'success' }, include: { donor: true } }),
+    db.expense.findMany(),
+    db.inkindBatch.findMany(),
+  ])
+  const ledger = [
+    ...donations.map((d) => ({ kind: 'donation', code: d.txnCode, who: d.donor.fullName, amount: d.amount, status: d.status, at: d.confirmedAt })),
+    ...expenses.map((e) => ({ kind: 'expense', code: 'EXP-' + e.id, who: e.title, amount: -e.amount, status: e.status, at: e.approvedAt })),
+    ...inkind.map((i) => ({ kind: 'inkind', code: 'IK-' + i.id, who: i.donorName, amount: 0n, label: `${i.quantityTotal} ${i.unit} ${i.name}`, status: i.status, at: i.receivedAt })),
+  ].sort((a, b) => (new Date(b.at ?? 0).getTime()) - (new Date(a.at ?? 0).getTime()))
+  res.json(ledger)
+})
+
+// --- TNV/Admin: nhận hiện vật vào kho ---
+app.post('/api/inventory', requireAuth, requireRole('tnv', 'admin'), async (req, res) => {
+  const { name, category, donorName, campaignSlug, unit, quantity, condition } = req.body
+  const campaign = await db.campaign.findUnique({ where: { slug: campaignSlug } })
+  if (!campaign) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
+  const batch = await db.inkindBatch.create({
+    data: {
+      name, category, donorName, campaignId: campaign.id, unit,
+      quantityTotal: Number(quantity), quantityRemaining: Number(quantity),
+      condition: condition ?? 'new', status: 'stored', receivedById: currentUser(req).id,
+    },
+  })
+  res.json(batch)
+})
+
+// --- Admin: tạo khoản giải ngân (chờ chứng từ để xác minh) ---
+app.post('/api/expenses', requireAuth, requireRole('admin'), async (req, res) => {
+  const { campaignSlug, title, amount, type } = req.body
+  const campaign = await db.campaign.findUnique({ where: { slug: campaignSlug } })
+  if (!campaign) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
+  const expense = await db.expense.create({
+    data: { campaignId: campaign.id, title, amount: BigInt(amount), type: type ?? 'disbursement', status: 'pending', submittedById: currentUser(req).id },
+  })
+  res.json(expense)
+})
+
+// --- Admin: danh sách khoản chi (giải ngân + chi phí TNV) ---
+app.get('/api/expenses', requireAuth, requireRole('admin'), async (_req, res) => {
+  const list = await db.expense.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: { campaign: { select: { title: true } }, submittedBy: { select: { fullName: true } } },
+  })
+  res.json(list)
+})
+
+// --- Admin: xác minh khoản chi (đính kèm chứng từ → verified) ---
+app.post('/api/expenses/:id/verify', requireAuth, requireRole('admin'), async (req, res) => {
+  const id = Number(req.params.id)
+  const exp = await db.expense.findUnique({ where: { id } })
+  if (!exp) return res.status(404).json({ error: 'Không tìm thấy khoản chi' })
+  const me = currentUser(req)
+  const updated = await db.$transaction(async (tx) => {
+    await tx.mediaAsset.create({ data: { url: `/uploads/receipt-exp${id}.jpg`, kind: 'receipt', ownerType: 'expense', ownerId: id, uploadedById: me.id } })
+    const e = await tx.expense.update({ where: { id }, data: { status: 'verified', approvedById: me.id, approvedAt: new Date() } })
+    await tx.auditLog.create({ data: { actorId: me.id, action: 'verify', entityType: 'Expense', entityId: id, reason: 'Đính kèm chứng từ & xác minh' } })
+    return e
+  })
+  res.json(updated)
+})
+
+// --- Admin: từ chối khoản chi ---
+app.post('/api/expenses/:id/reject', requireAuth, requireRole('admin'), async (req, res) => {
+  const id = Number(req.params.id)
+  const me = currentUser(req)
+  const e = await db.expense.update({ where: { id }, data: { status: 'rejected', approvedById: me.id, approvedAt: new Date() } })
+  await db.auditLog.create({ data: { actorId: me.id, action: 'reject', entityType: 'Expense', entityId: id, reason: req.body?.reason ?? 'Không hợp lệ' } })
+  res.json(e)
+})
+
+const PORT = 4000
+app.listen(PORT, () => console.log(`🚀 API "Cùng em đến trường" chạy tại http://localhost:${PORT}`))

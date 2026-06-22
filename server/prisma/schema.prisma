@@ -1,0 +1,182 @@
+// CSDL "Cùng em đến trường" — SQLite + Prisma
+// Lưu ý SQLite: không có ENUM/JSON gốc → dùng String (kèm chú thích giá trị hợp lệ).
+// Tiền tệ: BigInt, đơn vị đồng (VND).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  fullName      String
+  email         String   @unique
+  phone         String?
+  passwordHash  String?
+  oauthProvider String? // 'google' | 'facebook' | null
+  role          String   @default("donor") // 'donor' | 'tnv' | 'admin'
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+
+  campaignsCreated Campaign[]     @relation("CampaignCreatedBy")
+  donations        Donation[]
+  inkindReceived   InkindBatch[]  @relation("InkindReceivedBy")
+  distributions    Distribution[] @relation("DistributedBy")
+  expensesSubmitted Expense[]     @relation("ExpenseSubmittedBy")
+  expensesApproved  Expense[]     @relation("ExpenseApprovedBy")
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+}
+
+model Beneficiary {
+  id            Int            @id @default(autoincrement())
+  name          String // "Điểm trường Bản Mo"
+  province      String
+  location      String?
+  description   String?
+  createdAt     DateTime       @default(now())
+  distributions Distribution[]
+}
+
+model Campaign {
+  id             Int      @id @default(autoincrement())
+  title          String
+  slug           String   @unique
+  location       String
+  status         String   @default("active") // 'urgent' | 'active' | 'done'
+  story          String
+  goalAmount     BigInt
+  raisedAmount   BigInt   @default(0)
+  donorCount     Int      @default(0)
+  inkindReceived Int      @default(0)
+  inkindGiven    Int      @default(0)
+  startDate      DateTime?
+  endDate        DateTime?
+  bannerEmoji    String?
+  isVerified     Boolean  @default(false)
+  createdById    Int?
+  createdBy      User?    @relation("CampaignCreatedBy", fields: [createdById], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  milestones    CampaignMilestone[]
+  donations     Donation[]
+  inkindBatches InkindBatch[]
+  expenses      Expense[]
+}
+
+model CampaignMilestone {
+  id          Int      @id @default(autoincrement())
+  campaignId  Int
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  label       String
+  dateLabel   String // "06/2024"
+  description  String?
+  state       String // 'done' | 'now' | 'todo'
+  orderIndex  Int      @default(0)
+}
+
+model Donation {
+  id            Int       @id @default(autoincrement())
+  txnCode       String    @unique // "CE-1455126"
+  campaignId    Int
+  campaign      Campaign  @relation(fields: [campaignId], references: [id])
+  donorId       Int
+  donor         User      @relation(fields: [donorId], references: [id])
+  amount        BigInt
+  message       String?
+  isAnonymous   Boolean   @default(false)
+  paymentMethod String    @default("qr_fake")
+  status        String    @default("pending") // 'pending' | 'success' | 'failed'
+  createdAt     DateTime  @default(now())
+  confirmedAt   DateTime?
+}
+
+model InkindBatch {
+  id                Int            @id @default(autoincrement())
+  name              String
+  category          String // 'book' | 'clothing' | 'supplies' | 'other'
+  donorName         String
+  donorId           Int?
+  campaignId        Int
+  campaign          Campaign       @relation(fields: [campaignId], references: [id])
+  unit              String // 'bộ' | 'cái' | 'kg'
+  quantityTotal     Int
+  quantityRemaining Int
+  condition         String         @default("new") // 'new' | 'used_good'
+  estimatedValue    BigInt?
+  status            String         @default("stored") // 'stored' | 'partial' | 'given'
+  receivedById      Int
+  receivedBy        User           @relation("InkindReceivedBy", fields: [receivedById], references: [id])
+  receivedAt        DateTime       @default(now())
+  distributions     Distribution[]
+}
+
+model Distribution {
+  id             Int         @id @default(autoincrement())
+  batchId        Int
+  batch          InkindBatch @relation(fields: [batchId], references: [id])
+  beneficiaryId  Int
+  beneficiary    Beneficiary @relation(fields: [beneficiaryId], references: [id])
+  quantity       Int
+  note           String?
+  distributedById Int
+  distributedBy  User        @relation("DistributedBy", fields: [distributedById], references: [id])
+  distributedAt  DateTime    @default(now())
+}
+
+model Expense {
+  id           Int       @id @default(autoincrement())
+  campaignId   Int
+  campaign     Campaign  @relation(fields: [campaignId], references: [id])
+  title        String
+  amount       BigInt
+  type         String // 'disbursement' | 'field_expense'
+  status       String    @default("pending") // 'pending' | 'verified' | 'rejected' | 'voided'
+  submittedById Int
+  submittedBy  User      @relation("ExpenseSubmittedBy", fields: [submittedById], references: [id])
+  approvedById Int?
+  approvedBy   User?     @relation("ExpenseApprovedBy", fields: [approvedById], references: [id])
+  spentAt      DateTime?
+  createdAt    DateTime  @default(now())
+  approvedAt   DateTime?
+}
+
+model MediaAsset {
+  id         Int      @id @default(autoincrement())
+  url        String
+  kind       String // 'receipt' | 'field_photo' | 'item_photo' | 'distribution_photo'
+  ownerType  String // 'donation' | 'expense' | 'inkind_batch' | 'distribution' | 'campaign'
+  ownerId    Int
+  uploadedById Int?
+  createdAt  DateTime @default(now())
+
+  @@index([ownerType, ownerId])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  type      String // 'donation_success' | 'campaign_update' | 'txn_verified' | 'report' | 'system'
+  title     String
+  body      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  actorId    Int?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String // 'create' | 'update' | 'verify' | 'void' | 'reject'
+  entityType String
+  entityId   Int
+  changes    String? // JSON dạng text
+  reason     String?
+  createdAt  DateTime @default(now())
+}

@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand — trustworthy blue */
+  --color-brand-50:  #eef4ff;
+  --color-brand-100: #d9e6ff;
+  --color-brand-200: #bcd2ff;
+  --color-brand-300: #8eb4ff;
+  --color-brand-400: #598bff;
+  --color-brand-500: #3366f6;
+  --color-brand-600: #1f4fe0;
+  --color-brand-700: #1a3eb8;
+  --color-brand-800: #1b3793;
+  --color-brand-900: #1b3274;
+
+  /* Warm accent — the "heart" of charity */
+  --color-warm-400: #fbbf4c;
+  --color-warm-500: #f59e0b;
+}
+
+html, body, #root { height: 100%; }
+body {
+  font-family: var(--font-sans);
+  background: #0b1220;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* hide scrollbars inside the phone but keep scroll */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes pop { 0% { transform: scale(.7); opacity: 0 } 60% { transform: scale(1.08) } 100% { transform: scale(1); opacity: 1 } }
+.animate-pop { animation: pop .45s cubic-bezier(.2,.8,.2,1) both; }
+
+@keyframes slideUp { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+.animate-slide-up { animation: slideUp .35s ease both; }
+
+@keyframes spin { to { transform: rotate(360deg) } }
+.animate-spin-slow { animation: spin 1s linear infinite; }

@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Database (tái tạo bằng: npm run migrate + npm run seed)
+server/prisma/dev.db
+server/prisma/*.db
+server/prisma/*.db-journal
+
+# Env & secrets
+.env
+.env.*
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# BMad tooling & AI artifacts (không thuộc mã nguồn sản phẩm)
+_bmad/
+.claude/

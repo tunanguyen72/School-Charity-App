@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cùng em đến trường — Prototype</title>
+<style>
+  :root{
+    --brand:#1656c9; --brand-dark:#0f3f99; --brand-light:#e8f0ff;
+    --green:#16a34a; --red:#dc2626; --amber:#f59e0b;
+    --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f3f4f6; --card:#fff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Segoe UI',system-ui,Roboto,Arial,sans-serif;background:#0b1220;color:var(--ink);
+       display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:24px 12px}
+  /* ---- top toolbar (prototype controls, not part of app) ---- */
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;margin-bottom:18px;color:#cbd5e1}
+  .toolbar h1{font-size:15px;font-weight:600;color:#fff;margin-right:8px}
+  .toolbar span{font-size:12px;opacity:.7}
+  .rolebtns{display:flex;gap:4px;background:#1e293b;padding:4px;border-radius:10px}
+  .rolebtns button{background:transparent;border:0;color:#94a3b8;padding:6px 12px;border-radius:7px;font-size:12px;cursor:pointer;font-weight:600}
+  .rolebtns button.active{background:var(--brand);color:#fff}
+  /* ---- phone frame ---- */
+  .phone{width:390px;max-width:96vw;height:800px;max-height:88vh;background:var(--bg);border-radius:38px;
+         border:10px solid #0f172a;box-shadow:0 24px 60px rgba(0,0,0,.5);position:relative;overflow:hidden;display:flex;flex-direction:column}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:26px;background:#0f172a;border-radius:0 0 18px 18px;z-index:50}
+  .screen{flex:1;overflow-y:auto;display:none;flex-direction:column;padding-bottom:78px}
+  .screen.active{display:flex}
+  .screen::-webkit-scrollbar{width:0}
+  /* ---- generic ---- */
+  .pad{padding:16px}
+  .row{display:flex;align-items:center}
+  .between{justify-content:space-between}
+  .gap{gap:10px}
+  .muted{color:var(--muted);font-size:13px}
+  .h-title{font-size:18px;font-weight:700}
+  .sec-title{font-size:16px;font-weight:700;margin:18px 16px 8px}
+  .pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+  .pill.red{background:#fee2e2;color:var(--red)} .pill.green{background:#dcfce7;color:var(--green)}
+  .pill.blue{background:var(--brand-light);color:var(--brand)} .pill.amber{background:#fef3c7;color:#b45309}
+  .btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;text-align:center}
+  .btn-primary{background:var(--brand);color:#fff}
+  .btn-ghost{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}
+  .btn-soft{background:var(--brand-light);color:var(--brand)}
+  .card{background:var(--card);border-radius:16px;padding:14px;margin:0 16px 12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .progress{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin:8px 0}
+  .progress > i{display:block;height:100%;background:var(--brand);border-radius:8px}
+  .avatar{width:40px;height:40px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--brand);flex-shrink:0}
+  .topbar{background:var(--card);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .back{background:none;border:0;font-size:20px;cursor:pointer;color:var(--ink)}
+  /* hero */
+  .hero{background:linear-gradient(135deg,var(--brand),var(--brand-dark));color:#fff;border-radius:18px;padding:18px;margin:0 16px}
+  .hero .big{font-size:30px;font-weight:800;letter-spacing:-1px}
+  .hero .stats{display:flex;justify-content:space-between;margin-top:14px;background:rgba(255,255,255,.12);border-radius:12px;padding:10px}
+  .hero .stats div{text-align:center;flex:1}
+  .hero .stats b{display:block;font-size:15px}
+  .hero .stats small{font-size:10px;opacity:.85}
+  .thumb{width:100%;height:140px;border-radius:12px;object-fit:cover;display:block;background:#dbe4f5}
+  .imgph{display:flex;align-items:center;justify-content:center;color:#7b93c4;font-size:34px}
+  /* bottom nav */
+  .nav{position:absolute;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:1px solid var(--line);
+       display:flex;align-items:center;justify-content:space-around;z-index:40}
+  .nav button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-size:10px;cursor:pointer;flex:1}
+  .nav button.active{color:var(--brand)}
+  .nav .ic{font-size:19px}
+  .nav .fab{margin-top:-26px;width:52px;height:52px;border-radius:50%;background:var(--brand);color:#fff;
+            display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 14px rgba(22,86,201,.5);flex:none}
+  .nav .fab + small{margin-top:2px}
+  /* form bits */
+  .field{margin:0 16px 12px}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+  .field input,.field select,.field textarea{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:11px;font-size:14px;font-family:inherit}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 16px 12px}
+  .chips .chip{flex:1 0 28%;text-align:center;padding:12px 0;border:1.5px solid var(--line);border-radius:11px;font-weight:700;cursor:pointer;background:#fff}
+  .chips .chip.active{border-color:var(--brand);background:var(--brand-light);color:var(--brand)}
+  .seg{display:flex;background:var(--line);border-radius:11px;padding:4px;margin:0 16px 14px}
+  .seg button{flex:1;border:0;background:none;padding:9px;border-radius:8px;font-weight:600;font-size:13px;color:var(--muted);cursor:pointer}
+  .seg button.active{background:#fff;color:var(--brand);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+  .list-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);background:#fff}
+  .li-ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+  .timeline{margin:6px 16px}
+  .tl-item{display:flex;gap:12px;padding-bottom:14px;position:relative}
+  .tl-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;border:3px solid #fff;box-shadow:0 0 0 2px var(--line);background:#fff;z-index:2}
+  .tl-dot.done{background:var(--green);box-shadow:0 0 0 2px var(--green)}
+  .tl-dot.now{background:var(--brand);box-shadow:0 0 0 2px var(--brand)}
+  .tl-item:not(:last-child)::before{content:"";position:absolute;left:8px;top:18px;bottom:-4px;width:2px;background:var(--line)}
+  .qr{width:200px;height:200px;margin:14px auto;background:
+      repeating-linear-gradient(90deg,#000 0 8px,#fff 8px 16px),
+      repeating-linear-gradient(0deg,#000 0 8px,transparent 8px 16px);
+      border:10px solid #fff;box-shadow:0 0 0 1px var(--line);border-radius:8px;position:relative}
+  .qr::after{content:"QR GIẢ LẬP";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+             font-size:11px;font-weight:800;color:#fff;background:rgba(22,86,201,.82);letter-spacing:1px}
+  .success-ic{width:84px;height:84px;border-radius:50%;background:#dcfce7;color:var(--green);font-size:44px;
+              display:flex;align-items:center;justify-content:center;margin:22px auto 10px}
+  .kv{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  .kv b{font-weight:700}
+  .badge-row{display:flex;justify-content:space-around;margin-top:12px;font-size:11px;color:var(--muted);text-align:center}
+  .verified{display:inline-flex;align-items:center;gap:4px;color:var(--green);font-size:12px;font-weight:700}
+  .receipt{border:1px solid var(--line);border-radius:10px;padding:14px;margin:10px 16px;background:#fafafa;font-size:13px}
+  .note{font-size:12px;color:var(--brand);background:var(--brand-light);padding:8px 12px;border-radius:8px;margin:0 16px 12px}
+  .toast{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:30px;font-size:13px;opacity:0;transition:.3s;z-index:60;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>🎒 Cùng em đến trường</h1>
+  <span>Prototype · chuyển vai trò để xem nav khác nhau →</span>
+  <div class="rolebtns" id="roleBtns">
+    <button data-role="donor" class="active" onclick="setRole('donor')">Nhà hảo tâm</button>
+    <button data-role="tnv" onclick="setRole('tnv')">Tình nguyện viên</button>
+    <button data-role="admin" onclick="setRole('admin')">Admin</button>
+  </div>
+</div>
+
+<div class="phone">
+  <div class="notch"></div>
+
+  <!-- ============ LOGIN ============ -->
+  <div class="screen active" id="s-login">
+    <div class="pad" style="text-align:center;padding-top:48px">
+      <div style="font-size:46px">🎒</div>
+      <div style="color:var(--brand);font-weight:800;font-size:20px;margin-top:6px">Cùng em đến trường</div>
+      <div class="thumb imgph" style="height:150px;margin:20px 0">🏫</div>
+      <div class="h-title">Chào mừng trở lại</div>
+      <p class="muted" style="margin:6px 0 22px">Đăng nhập để tiếp tục đồng hành cùng các chiến dịch giáo dục.</p>
+    </div>
+    <div class="field"><label>Email hoặc Số điện thoại</label><input placeholder="Nhập email hoặc SĐT"></div>
+    <div class="field"><label>Mật khẩu</label><input type="password" placeholder="Nhập mật khẩu"></div>
+    <div class="pad" style="padding-top:0">
+      <button class="btn btn-primary" onclick="go('home')">Đăng nhập</button>
+      <p class="muted" style="text-align:center;margin:14px 0">Hoặc</p>
+      <button class="btn btn-ghost" style="margin-bottom:10px" onclick="go('home')">🔵 Tiếp tục với Google</button>
+      <button class="btn btn-ghost" onclick="go('home')">🔷 Tiếp tục với Facebook</button>
+      <div class="note" style="margin:18px 0 0;text-align:center">🛡️ Nền tảng quyên góp minh bạch & xác thực</div>
+    </div>
+  </div>
+
+  <!-- ============ HOME ============ -->
+  <div class="screen" id="s-home">
+    <div class="topbar">
+      <div class="row gap"><div class="avatar">H</div><div><b id="homeHi">Chào cô Hương!</b><div class="muted" style="font-size:11px">Thứ Hai, 22 Tháng 5</div></div></div>
+      <span style="font-size:20px" onclick="go('notify')">🔔</span>
+    </div>
+    <div style="height:14px"></div>
+    <div class="hero">
+      <div style="opacity:.9;font-size:13px">Tổng quỹ đã nhận</div>
+      <div class="big">1.250.000.000đ</div>
+      <div style="font-size:12px;opacity:.9">+ 450 bộ hiện vật <span style="background:rgba(255,255,255,.2);padding:2px 6px;border-radius:6px">↗ 12%</span></div>
+      <div class="stats">
+        <div><b>450 bộ</b><small>HIỆN VẬT</small></div>
+        <div><b>12</b><small>DỰ ÁN</small></div>
+        <div><b>850</b><small>TRẺ ĐƯỢC HỖ TRỢ</small></div>
+      </div>
+    </div>
+    <div class="row between" style="margin:18px 16px 8px"><b class="h-title">Chiến dịch nổi bật</b><a class="muted" style="color:var(--brand);font-weight:600" onclick="go('campaigns')">Tất cả</a></div>
+    <div class="card" onclick="go('campaign')" style="cursor:pointer">
+      <div style="position:relative"><div class="thumb imgph">📚</div><span class="pill red" style="position:absolute;top:8px;left:8px">🔴 KHẨN CẤP</span></div>
+      <b style="display:block;margin-top:10px">Xây điểm trường Bản Mo</b>
+      <p class="muted">Giúp 45 em nhỏ có mái trường vững chãi…</p>
+      <div class="progress"><i style="width:75%"></i></div>
+      <div class="row between"><b style="color:var(--brand)">150.000.000đ</b><span class="muted">75% mục tiêu</span></div>
+    </div>
+    <div class="sec-title">Hoạt động mới nhất</div>
+    <div class="list-item"><div class="li-ic" style="background:#dcfce7;color:var(--green)">💝</div><div style="flex:1"><b>Nguyễn Văn A</b> quyên góp 500k<div class="muted">2 phút trước</div></div></div>
+    <div class="list-item"><div class="li-ic" style="background:var(--brand-light);color:var(--brand)">📦</div><div style="flex:1">Trao sách tại <b>Hà Giang</b><div class="muted">1 giờ trước</div></div></div>
+  </div>
+
+  <!-- ============ CAMPAIGNS LIST ============ -->
+  <div class="screen" id="s-campaigns">
+    <div class="topbar"><b class="h-title">Chiến dịch</b><span style="font-size:20px">🔔</span></div>
+    <div class="field" style="margin-top:14px"><input placeholder="🔍 Tìm kiếm chiến dịch..."></div>
+    <div class="chips" style="flex-wrap:nowrap">
+      <div class="chip active" style="flex:none;padding:8px 16px">Tất cả</div>
+      <div class="chip" style="flex:none;padding:8px 16px">Khẩn cấp</div>
+      <div class="chip" style="flex:none;padding:8px 16px">Đang gây quỹ</div>
+    </div>
+    <div class="card" onclick="go('campaign')" style="cursor:pointer">
+      <div style="position:relative"><div class="thumb imgph">🏫</div><span class="pill red" style="position:absolute;top:8px;left:8px">🔴 Khẩn cấp</span></div>
+      <b style="display:block;margin-top:10px">Xây trường cho em: Điểm trường Nậm Pầm</b>
+      <div class="progress"><i style="width:85%"></i></div>
+      <div class="row between"><b style="color:var(--brand)">425.000.000đ</b><span class="muted">/ 500tr · 85%</span></div>
+      <button class="btn btn-soft" style="margin-top:10px">Quyên góp ngay</button>
+    </div>
+    <div class="card">
+      <div style="position:relative"><div class="thumb imgph">📖</div><span class="pill blue" style="position:absolute;top:8px;left:8px">Đang gây quỹ</span></div>
+      <b style="display:block;margin-top:10px">Tủ sách yêu thương vùng biên giới</b>
+      <div class="progress"><i style="width:42%"></i></div>
+      <div class="row between"><b style="color:var(--brand)">63.000.000đ</b><span class="muted">/ 150tr · 42%</span></div>
+      <button class="btn btn-soft" style="margin-top:10px">Quyên góp ngay</button>
+    </div>
+    <div class="card" style="opacity:.85">
+      <div style="position:relative"><div class="thumb imgph">🧥</div><span class="pill green" style="position:absolute;top:8px;left:8px">✅ Hoàn thành</span></div>
+      <b style="display:block;margin-top:10px">Áo ấm mùa đông huyện Mèo Vạc</b>
+      <div class="progress"><i style="width:100%;background:var(--green)"></i></div>
+      <div class="row between"><b style="color:var(--green)">215.000.000đ</b><span class="muted">100%</span></div>
+      <button class="btn btn-ghost" style="margin-top:10px">Xem kết quả</button>
+    </div>
+  </div>
+
+  <!-- ============ CAMPAIGN DETAIL ============ -->
+  <div class="screen" id="s-campaign">
+    <div class="topbar"><button class="back" onclick="go('campaigns')">←</button><b>Chi tiết chiến dịch</b><span>↗</span></div>
+    <div class="thumb imgph" style="height:170px;border-radius:0;margin-bottom:0">🏫</div>
+    <div class="pad">
+      <span class="pill blue">Đang gây quỹ</span>
+      <div class="h-title" style="margin:8px 0 2px">Xây trường cho em tại Bản Mo, Hà Giang</div>
+      <div class="muted">📍 Xín Mần, Hà Giang</div>
+    </div>
+    <div class="card" style="background:var(--brand);color:#fff">
+      <div style="font-size:26px;font-weight:800">150.000.000<span style="font-size:14px;opacity:.8"> / 200.000.000đ</span></div>
+      <div class="progress" style="background:rgba(255,255,255,.3)"><i style="width:75%;background:#fff"></i></div>
+      <div class="row between" style="font-size:12px;opacity:.95"><span>120 nhà hảo tâm</span><span>45 ngày còn lại</span></div>
+      <button class="btn" style="background:#fff;color:var(--brand);margin-top:12px" onclick="go('donate')">💝 Quyên góp ngay</button>
+    </div>
+    <div class="badge-row"><div>✅<br>Đã xác thực</div><div>🕐<br>Cập nhật 2h</div><div>🛡️<br>Minh bạch 100%</div></div>
+    <div class="seg" style="margin-top:14px">
+      <button class="active" onclick="tab(this,'tab-story')">Câu chuyện</button>
+      <button onclick="tab(this,'tab-donate')">Quyên góp</button>
+      <button onclick="tab(this,'tab-cost')">Chi phí</button>
+    </div>
+    <div id="tab-story">
+      <p class="muted" style="margin:0 16px 14px">Tại Bản Mo, 45 em mầm non đang phải học tập trong căn nhà gỗ cũ kỹ, dột nát mỗi khi mưa về…</p>
+      <div class="sec-title">Lộ trình triển khai</div>
+      <div class="timeline">
+        <div class="tl-item"><div class="tl-dot done"></div><div><b>Bắt đầu khảo sát</b><div class="muted">05/2024 · Đã hoàn thành đánh giá hiện trạng</div></div></div>
+        <div class="tl-item"><div class="tl-dot now"></div><div><b>Khai mạc gây quỹ</b><div class="muted">06/2024 · Đang tiếp nhận đóng góp</div></div></div>
+        <div class="tl-item"><div class="tl-dot"></div><div><b>Dự kiến khởi công</b><div class="muted">08/2024 · Xây móng & tường bao</div></div></div>
+      </div>
+      <div class="sec-title">Hình ảnh thực tế</div>
+      <div class="row gap" style="margin:0 16px 16px"><div class="thumb imgph" style="height:90px">🖼️</div><div class="thumb imgph" style="height:90px">🖼️</div></div>
+    </div>
+    <div id="tab-donate" style="display:none">
+      <div class="list-item"><div class="li-ic" style="background:var(--brand-light);color:var(--brand)">NH</div><div style="flex:1"><b>Nguyễn Văn Hiếu</b><div class="muted">3 giờ trước</div></div><b style="color:var(--green)">+500.000đ</b></div>
+      <div class="list-item"><div class="li-ic" style="background:var(--brand-light);color:var(--brand)">TM</div><div style="flex:1"><b>Trần Minh Tâm</b><div class="muted">5 giờ trước</div></div><b style="color:var(--green)">+1.000.000đ</b></div>
+      <div class="list-item"><div class="li-ic" style="background:#f3f4f6">🙈</div><div style="flex:1"><b>Nhà hảo tâm ẩn danh</b><div class="muted">hôm qua</div></div><b style="color:var(--green)">+2.000.000đ</b></div>
+    </div>
+    <div id="tab-cost" style="display:none">
+      <div class="note">Mỗi khoản chi đều có chứng từ & trạng thái xác minh.</div>
+      <div class="list-item"><div class="li-ic" style="background:#fee2e2;color:var(--red)">🧾</div><div style="flex:1"><b>Mua vật liệu xây móng</b><div class="verified">✅ Đã xác minh · có chứng từ</div></div><b style="color:var(--red)">-45.000.000đ</b></div>
+      <div class="list-item"><div class="li-ic" style="background:#fee2e2;color:var(--red)">🚚</div><div style="flex:1"><b>Vận chuyển vật tư</b><div class="verified">✅ Đã xác minh · có chứng từ</div></div><b style="color:var(--red)">-8.000.000đ</b></div>
+    </div>
+  </div>
+
+  <!-- ============ DONATE (amount) ============ -->
+  <div class="screen" id="s-donate">
+    <div class="topbar"><button class="back" onclick="go('campaign')">←</button><b>Quyên góp</b><span></span></div>
+    <div class="card row gap"><div class="li-ic imgph" style="background:#dbe4f5">🏫</div><div><b>Xây trường cho em tại Bản Mo</b><div class="muted">📍 Hà Giang · 75%</div></div></div>
+    <div class="seg">
+      <button class="active" onclick="tab(this,null)">💵 Tiền mặt</button>
+      <button onclick="showToast('Hiện vật: liên hệ TNV ghi nhận tại điểm tiếp nhận')">📦 Hiện vật</button>
+    </div>
+    <div class="field"><label>Chọn số tiền quyên góp</label></div>
+    <div class="chips" id="amtChips">
+      <div class="chip" onclick="pickAmt(this,'100.000')">100K</div>
+      <div class="chip active" onclick="pickAmt(this,'500.000')">500K</div>
+      <div class="chip" onclick="pickAmt(this,'1.000.000')">1M</div>
+      <div class="chip" onclick="pickAmt(this,'2.000.000')">2M</div>
+      <div class="chip" onclick="pickAmt(this,'5.000.000')">5M</div>
+      <div class="chip" onclick="pickAmt(this,'10.000.000')">Khác</div>
+    </div>
+    <div class="field"><label>Lời nhắn (tuỳ chọn)</label><textarea rows="2" placeholder="Gửi lời động viên tới các em..."></textarea></div>
+    <div class="field"><label>Hiển thị</label>
+      <select><option>Công khai tên của tôi</option><option>Quyên góp ẩn danh</option></select>
+    </div>
+    <div class="pad" style="padding-top:0">
+      <button class="btn btn-primary" onclick="go('qr')">Tiếp tục — <span id="amtBtn">500.000đ</span></button>
+    </div>
+  </div>
+
+  <!-- ============ QR (fake) ============ -->
+  <div class="screen" id="s-qr">
+    <div class="topbar"><button class="back" onclick="go('donate')">←</button><b>Quét mã thanh toán</b><span></span></div>
+    <div style="text-align:center" class="pad">
+      <p class="muted">Mở app ngân hàng và quét mã QR bên dưới để chuyển <b id="qrAmt" style="color:var(--brand)">500.000đ</b></p>
+      <div class="qr"></div>
+      <div class="kv" style="border:0"><span>Mã giao dịch</span><b>CE-9823471</b></div>
+      <div class="note">🔒 Đây là QR <b>giả lập</b> cho đồ án. Bấm nút dưới để mở trang "thanh toán" mô phỏng.</div>
+      <button class="btn btn-ghost" style="margin-bottom:10px" onclick="openFakePay()">📲 Mô phỏng: Quét QR & mở trang thanh toán</button>
+      <p class="muted" id="qrWait" style="display:none">⏳ Đang chờ xác nhận từ trang thanh toán...</p>
+    </div>
+  </div>
+
+  <!-- ============ FAKE PAY PAGE (simulated web) ============ -->
+  <div class="screen" id="s-pay" style="background:#0f3f99;color:#fff;align-items:center;justify-content:center">
+    <div style="text-align:center;padding:30px">
+      <div class="muted" style="color:#cbd5e1;font-size:11px">🌐 trang web giả lập · pay.cungemdentruong.vn</div>
+      <div style="font-size:54px;margin:20px 0 8px">🏦</div>
+      <h2 style="font-size:20px">Cổng thanh toán (giả lập)</h2>
+      <div style="background:rgba(255,255,255,.12);border-radius:14px;padding:18px;margin:20px 0">
+        <div style="font-size:13px;opacity:.85">Số tiền chuyển</div>
+        <div style="font-size:32px;font-weight:800" id="payAmt">500.000đ</div>
+        <div style="font-size:12px;opacity:.85;margin-top:6px">Tới: QUỸ CÙNG EM ĐẾN TRƯỜNG<br>Nội dung: CE-9823471</div>
+      </div>
+      <button class="btn" style="background:#16a34a;color:#fff" onclick="confirmPay()">✅ Xác nhận đã chuyển khoản</button>
+      <p style="font-size:11px;opacity:.7;margin-top:14px">Sau khi xác nhận, app sẽ tự động ghi nhận quyên góp.</p>
+    </div>
+  </div>
+
+  <!-- ============ SUCCESS ============ -->
+  <div class="screen" id="s-success">
+    <div class="topbar"><b style="margin:auto;color:var(--brand)">Cùng em đến trường</b></div>
+    <div style="text-align:center" class="pad">
+      <div class="success-ic">✓</div>
+      <h2 style="color:var(--green)">Quyên góp thành công!</h2>
+      <p class="muted" style="margin:6px 24px 18px">Cảm ơn bạn đã đồng hành cùng các em trên hành trình đến trường 💚</p>
+    </div>
+    <div class="card">
+      <div class="kv"><span>Chiến dịch</span><b>Xây trường Bản Mo</b></div>
+      <div class="kv"><span>Hình thức</span><b>Tiền mặt (QR)</b></div>
+      <div class="kv"><span>Số tiền</span><b style="color:var(--green)" id="sucAmt">500.000đ</b></div>
+      <div class="kv"><span>Mã giao dịch</span><b>CE-9823471</b></div>
+      <div class="kv" style="border:0"><span>Trạng thái</span><span class="verified">✅ Đã xác minh tự động</span></div>
+    </div>
+    <div class="pad">
+      <button class="btn btn-primary" style="margin-bottom:10px" onclick="go('home')">🏠 Về trang chủ</button>
+      <button class="btn btn-ghost" onclick="showToast('Mở biên nhận điện tử (PDF)')">📄 Xem biên nhận</button>
+    </div>
+  </div>
+
+  <!-- ============ INVENTORY (Kho hiện vật) ============ -->
+  <div class="screen" id="s-inventory">
+    <div class="topbar"><b class="h-title">Kho hiện vật</b><span style="font-size:20px" onclick="go('receive')">＋</span></div>
+    <div class="hero" style="margin-top:14px">
+      <div style="opacity:.9;font-size:13px">Tổng hiện vật</div>
+      <div class="big">450 bộ</div>
+      <div class="stats">
+        <div><b>320</b><small>ĐANG LƯU KHO</small></div>
+        <div><b>130</b><small>ĐÃ TRAO TẶNG</small></div>
+        <div><b>8</b><small>ĐIỂM TRƯỜNG</small></div>
+      </div>
+    </div>
+    <div class="sec-title">Các lô hiện vật</div>
+    <div class="card">
+      <div class="row between"><b>📚 Sách giáo khoa</b><span class="pill blue">Đang lưu kho</span></div>
+      <div class="muted" style="margin:4px 0">Người tặng: Công ty TechCloud · Bản Mo</div>
+      <div class="row between"><span class="muted">Tồn: 100 / 100 bộ</span><button class="btn-soft" style="border:0;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer" onclick="go('distribute')">Phân phối →</button></div>
+    </div>
+    <div class="card">
+      <div class="row between"><b>🧥 Áo ấm mùa đông</b><span class="pill amber">Một phần</span></div>
+      <div class="muted" style="margin:4px 0">Người tặng: Nhóm thiện nguyện Hà Nội</div>
+      <div class="progress"><i style="width:60%;background:var(--amber)"></i></div>
+      <div class="row between"><span class="muted">Tồn: 80 / 200 cái · đã trao 120</span></div>
+    </div>
+    <div class="card" style="opacity:.85">
+      <div class="row between"><b>✏️ Bộ dụng cụ học tập</b><span class="pill green">Đã trao tặng</span></div>
+      <div class="muted" style="margin:4px 0">Người tặng: Nguyễn Thị B · Mèo Vạc</div>
+      <div class="row between"><span class="muted">Tồn: 0 / 150 bộ · đã trao hết</span></div>
+    </div>
+  </div>
+
+  <!-- ============ RECEIVE ITEM ============ -->
+  <div class="screen" id="s-receive">
+    <div class="topbar"><button class="back" onclick="go('inventory')">←</button><b>Nhận hiện vật</b><span></span></div>
+    <div style="height:10px"></div>
+    <div class="field"><label>Tên đồ vật</label><input placeholder="VD: Sách giáo khoa lớp 3"></div>
+    <div class="field"><label>Loại</label><select><option>Sách / Vở</option><option>Quần áo</option><option>Đồ dùng học tập</option><option>Khác</option></select></div>
+    <div class="row gap" style="margin:0 16px 12px">
+      <div style="flex:1"><label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Số lượng</label><input value="100" style="width:100%;padding:12px;border:1.5px solid var(--line);border-radius:11px"></div>
+      <div style="flex:1"><label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Đơn vị</label><select style="width:100%;padding:12px;border:1.5px solid var(--line);border-radius:11px"><option>bộ</option><option>cái</option><option>kg</option></select></div>
+    </div>
+    <div class="field"><label>Tình trạng</label><select><option>Mới</option><option>Đã qua sử dụng - tốt</option></select></div>
+    <div class="field"><label>Người tặng</label><input placeholder="VD: Công ty TechCloud"></div>
+    <div class="field"><label>Gắn vào chiến dịch</label><select><option>Xây trường Bản Mo</option><option>Tủ sách yêu thương</option></select></div>
+    <div class="field"><label>Ảnh hiện vật</label><div class="thumb imgph" style="height:90px;border:2px dashed var(--line)">📷 Chụp / tải ảnh</div></div>
+    <div class="pad"><button class="btn btn-primary" onclick="go('inventory');showToast('✅ Đã ghi nhận lô hiện vật vào kho')">Lưu vào kho</button></div>
+  </div>
+
+  <!-- ============ DISTRIBUTE ============ -->
+  <div class="screen" id="s-distribute">
+    <div class="topbar"><button class="back" onclick="go('inventory')">←</button><b>Phân phối hiện vật</b><span></span></div>
+    <div class="card row gap"><div class="li-ic" style="background:var(--brand-light);color:var(--brand)">📚</div><div><b>Sách giáo khoa</b><div class="muted">Tồn: 100 bộ</div></div></div>
+    <div class="field"><label>Điểm trường nhận</label><select><option>Điểm trường Bản Mo</option><option>Điểm trường Nậm Pầm</option></select></div>
+    <div class="field"><label>Số lượng trao</label><input value="40" type="number"></div>
+    <div class="field"><label>Ảnh trao tặng (minh chứng)</label><div class="thumb imgph" style="height:90px;border:2px dashed var(--line)">📷 Chụp ảnh trao tặng</div></div>
+    <div class="note">Ảnh sẽ tự động hiển thị ở mục "Hình ảnh thực tế" của chiến dịch.</div>
+    <div class="pad"><button class="btn btn-primary" onclick="go('inventory');showToast('✅ Đã trao 40 bộ · tồn còn 60')">Xác nhận trao tặng</button></div>
+  </div>
+
+  <!-- ============ TRANSACTIONS ============ -->
+  <div class="screen" id="s-trans">
+    <div class="topbar"><b class="h-title">Sổ quỹ & Giao dịch</b><span style="font-size:20px">📊</span></div>
+    <div class="card" style="margin-top:14px">
+      <div class="muted">Tổng thu quỹ</div>
+      <div style="font-size:24px;font-weight:800;color:var(--brand)">1.250.000.000đ</div>
+      <div class="progress"><i style="width:68%"></i></div>
+      <div class="row between" style="font-size:12px"><span class="muted">Đã giải ngân 850tr (68%)</span><span class="muted">Còn 400tr</span></div>
+    </div>
+    <div class="chips" style="flex-wrap:nowrap">
+      <div class="chip active" style="flex:none;padding:8px 14px">Tất cả</div>
+      <div class="chip" style="flex:none;padding:8px 14px">Quyên góp</div>
+      <div class="chip" style="flex:none;padding:8px 14px">Giải ngân</div>
+      <div class="chip" style="flex:none;padding:8px 14px">Hiện vật</div>
+    </div>
+    <div class="list-item" onclick="go('transdetail')" style="cursor:pointer"><div class="li-ic" style="background:#dcfce7;color:var(--green)">💝</div><div style="flex:1"><b>Nguyễn Văn A</b><div class="muted">Quyên góp tiền mặt · 20/05</div></div><div style="text-align:right"><b style="color:var(--green)">+500.000đ</b><div class="pill green" style="font-size:9px">THÀNH CÔNG</div></div></div>
+    <div class="list-item"><div class="li-ic" style="background:#fee2e2;color:var(--red)">🧾</div><div style="flex:1"><b>Ban điều hành</b><div class="muted">Giải ngân dự án Điện Biên · 19/05</div></div><div style="text-align:right"><b style="color:var(--red)">-15.000.000đ</b><div class="pill blue" style="font-size:9px">ĐÃ XÁC MINH</div></div></div>
+    <div class="list-item"><div class="li-ic" style="background:var(--brand-light);color:var(--brand)">📦</div><div style="flex:1"><b>Trần Thị B</b><div class="muted">Đóng góp hiện vật · 18/05</div></div><div style="text-align:right"><b>100 bộ sách</b><div class="pill green" style="font-size:9px">THÀNH CÔNG</div></div></div>
+    <div class="list-item"><div class="li-ic" style="background:#dcfce7;color:var(--green)">💝</div><div style="flex:1"><b>Công ty TechCloud</b><div class="muted">Quyên góp hàng tháng · 17/05</div></div><div style="text-align:right"><b style="color:var(--green)">+2.500.000đ</b><div class="pill green" style="font-size:9px">THÀNH CÔNG</div></div></div>
+  </div>
+
+  <!-- ============ TRANSACTION DETAIL ============ -->
+  <div class="screen" id="s-transdetail">
+    <div class="topbar"><button class="back" onclick="go('trans')">←</button><b>Chi tiết giao dịch</b><span></span></div>
+    <div style="text-align:center" class="pad"><div class="success-ic">✓</div><div class="muted">Giao dịch thành công</div><div style="font-size:26px;font-weight:800;color:var(--green)">+500.000đ</div></div>
+    <div class="card">
+      <div class="kv"><span>Mã giao dịch</span><b>TXN123456789</b></div>
+      <div class="kv"><span>Thời gian</span><b>14:30 · 24/05/2024</b></div>
+      <div class="kv"><span>Chiến dịch</span><b>Cùng em đến trường</b></div>
+      <div class="kv"><span>Người gửi</span><b>Nguyễn Văn A</b></div>
+      <div class="kv" style="border:0"><span>Trạng thái</span><span class="verified">✅ Đã xác minh</span></div>
+    </div>
+    <div class="sec-title">Minh chứng giao dịch</div>
+    <div class="receipt">
+      <b>🏦 BANK — CHUYỂN TIỀN THÀNH CÔNG</b>
+      <div class="kv" style="font-size:12px"><span>Số tiền</span><b>500.000 VND</b></div>
+      <div class="kv" style="font-size:12px"><span>Ngày</span><b>24/05/2024</b></div>
+      <div class="kv" style="font-size:12px;border:0"><span>Người nhận</span><b>QUỸ CÙNG EM ĐẾN TRƯỜNG</b></div>
+    </div>
+    <div class="note">ℹ️ Giao dịch được ghi nhận minh bạch & kiểm tra tự động.</div>
+  </div>
+
+  <!-- ============ PROFILE ============ -->
+  <div class="screen" id="s-profile">
+    <div class="topbar"><b class="h-title">Hồ sơ cá nhân</b><span style="font-size:18px" onclick="go('notify')">🔔</span></div>
+    <div class="card row gap" style="margin-top:14px"><div class="avatar" style="width:48px;height:48px">H</div><div><b style="font-size:16px" id="profName">Cô Hương</b><div class="muted" id="profRole">Nhà hảo tâm</div></div></div>
+    <div class="hero">
+      <div style="opacity:.9;font-size:13px">Tổng giá trị đóng góp</div>
+      <div class="big">5.500.000đ</div>
+      <div style="font-size:12px;opacity:.9">+ 12 bộ hiện vật</div>
+      <div class="stats"><div><b>12</b><small>LẦN ĐÓNG GÓP</small></div><div><b>4</b><small>DỰ ÁN HỖ TRỢ</small></div></div>
+    </div>
+    <div class="sec-title">Thành tựu & Tác động</div>
+    <div class="row gap" style="margin:0 16px 8px">
+      <div class="card" style="flex:1;margin:0;text-align:center"><div style="font-size:26px">🎒</div><b style="font-size:13px">20 trẻ</b><div class="muted" style="font-size:11px">được hỗ trợ sách vở</div></div>
+      <div class="card" style="flex:1;margin:0;text-align:center"><div style="font-size:26px">🏅</div><b style="font-size:13px">Người đồng hành</b><div class="muted" style="font-size:11px">huy hiệu mốc</div></div>
+    </div>
+    <div class="sec-title">Tài khoản</div>
+    <div class="list-item"><div class="li-ic" style="background:#f3f4f6">📜</div><div style="flex:1">Lịch sử quyên góp</div><span class="muted">›</span></div>
+    <div class="list-item"><div class="li-ic" style="background:#f3f4f6">🧾</div><div style="flex:1">Biên nhận điện tử</div><span class="muted">›</span></div>
+    <div class="list-item"><div class="li-ic" style="background:#f3f4f6">⚙️</div><div style="flex:1">Cài đặt</div><span class="muted">›</span></div>
+    <div class="list-item" onclick="go('login')" style="cursor:pointer"><div class="li-ic" style="background:#fee2e2;color:var(--red)">⎋</div><div style="flex:1;color:var(--red)">Đăng xuất</div></div>
+  </div>
+
+  <!-- ============ NOTIFICATIONS ============ -->
+  <div class="screen" id="s-notify">
+    <div class="topbar"><button class="back" onclick="go('home')">←</button><b>Thông báo</b><span>✓✓</span></div>
+    <div class="sec-title" style="font-size:13px;color:var(--muted)">HÔM NAY</div>
+    <div class="list-item"><div class="li-ic" style="background:#dcfce7;color:var(--green)">💝</div><div style="flex:1"><b>Quyên góp thành công</b><div class="muted">Cảm ơn bạn đã đóng góp 500.000đ</div></div><span class="muted" style="font-size:11px">10:30</span></div>
+    <div class="list-item"><div class="li-ic" style="background:var(--brand-light);color:var(--brand)">📢</div><div style="flex:1"><b>Cập nhật chiến dịch</b><div class="muted">Dự án Áo ấm hoàn thành 80%</div></div><span class="muted" style="font-size:11px">08:45</span></div>
+    <div class="sec-title" style="font-size:13px;color:var(--muted)">HÔM QUA</div>
+    <div class="list-item"><div class="li-ic" style="background:#dcfce7;color:var(--green)">✅</div><div style="flex:1"><b>Giao dịch đã xác minh</b><div class="muted">Đã đối soát với sao kê</div></div></div>
+    <div class="list-item"><div class="li-ic" style="background:#f3f4f6">📊</div><div style="flex:1"><b>Báo cáo minh bạch mới</b><div class="muted">Quỹ vừa công bố báo cáo thu chi 05/2024</div></div></div>
+  </div>
+
+  <!-- bottom nav injected here -->
+  <div class="nav" id="nav"></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  let role='donor', amount='500.000';
+
+  const navs = {
+    donor:[
+      {ic:'🏠',label:'Trang chủ',s:'home'},
+      {ic:'📋',label:'Chiến dịch',s:'campaigns'},
+      {fab:true,ic:'💝',label:'Quyên góp',s:'campaign'},
+      {ic:'📜',label:'Hoạt động',s:'trans'},
+      {ic:'👤',label:'Cá nhân',s:'profile'},
+    ],
+    tnv:[
+      {ic:'🏠',label:'Trang chủ',s:'home'},
+      {ic:'📋',label:'Chiến dịch',s:'campaigns'},
+      {fab:true,ic:'📦',label:'Kho',s:'inventory'},
+      {ic:'📜',label:'Giao dịch',s:'trans'},
+      {ic:'👤',label:'Cá nhân',s:'profile'},
+    ],
+    admin:[
+      {ic:'🏠',label:'Dashboard',s:'home'},
+      {ic:'📋',label:'Chiến dịch',s:'campaigns'},
+      {fab:true,ic:'📦',label:'Kho',s:'inventory'},
+      {ic:'💳',label:'Sổ quỹ',s:'trans'},
+      {ic:'👤',label:'Cá nhân',s:'profile'},
+    ],
+  };
+
+  const noNav = ['login','qr','pay','success','receive','distribute','transdetail'];
+  let current='login';
+
+  function renderNav(){
+    const nav=document.getElementById('nav');
+    if(noNav.includes(current)){nav.style.display='none';return;}
+    nav.style.display='flex';
+    nav.innerHTML = navs[role].map(n=>{
+      const act = (n.s===current)?'active':'';
+      if(n.fab) return `<button class="${act}" onclick="go('${n.s}')"><span class="fab">${n.ic}</span><small>${n.label}</small></button>`;
+      return `<button class="${act}" onclick="go('${n.s}')"><span class="ic">${n.ic}</span>${n.label}</button>`;
+    }).join('');
+  }
+
+  function go(s){
+    document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+    document.getElementById('s-'+s).classList.add('active');
+    document.getElementById('s-'+s).scrollTop=0;
+    current=s; renderNav();
+  }
+
+  function setRole(r){
+    role=r;
+    document.querySelectorAll('#roleBtns button').forEach(b=>b.classList.toggle('active',b.dataset.role===r));
+    // adjust profile + greeting labels
+    const map={donor:['Cô Hương','Nhà hảo tâm','Chào cô Hương!'],tnv:['Anh Khải','Tình nguyện viên','Chào anh Khải!'],admin:['Chị Lan','Admin / Điều phối','Chào chị Lan!']};
+    profName.textContent=map[r][0]; profRole.textContent=map[r][1]; homeHi.textContent=map[r][2];
+    if(current==='login'){renderNav();return;}
+    // route to a sensible landing for the role
+    go(r==='donor'?'home':r==='tnv'?'inventory':'home');
+  }
+
+  function tab(btn,id){
+    btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    if(id){['tab-story','tab-donate','tab-cost'].forEach(t=>{const el=document.getElementById(t);if(el)el.style.display=(t===id)?'block':'none';});}
+  }
+
+  function pickAmt(el,val){
+    el.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active'); amount=val;
+    amtBtn.textContent=val+'đ';
+  }
+
+  function openFakePay(){
+    payAmt.textContent=amount+'đ';
+    document.getElementById('s-pay').classList.add('active');
+    document.getElementById('s-qr').classList.remove('active');
+    current='pay'; renderNav();
+    qrWait.style.display='block';
+  }
+  function confirmPay(){
+    qrAmt.textContent=amount+'đ'; sucAmt.textContent=amount+'đ';
+    go('success');
+  }
+
+  let tt;
+  function showToast(msg){
+    const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2200);
+  }
+
+  renderNav();
+</script>
+</body>
+</html>
