@@ -14,11 +14,11 @@ export default function CampaignDetail() {
   const { data: c, loading, error } = useFetch(() => api.campaign(id!), [id])
   const [tab, setTab] = useState<Tab>('story')
 
-  if (loading) return <div className="min-h-full bg-slate-50"><TopBar title="Chi tiết chiến dịch" back="/campaigns" /><Loading /></div>
-  if (error || !c) return <div className="min-h-full bg-slate-50"><TopBar title="Chi tiết chiến dịch" back="/campaigns" /><ErrorBox message={error ?? 'Không tìm thấy'} /></div>
+  if (loading) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Chi tiết chiến dịch" back="/campaigns" /><Loading /></div>
+  if (error || !c) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Chi tiết chiến dịch" back="/campaigns" /><ErrorBox message={error ?? 'Không tìm thấy'} /></div>
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="min-h-[100svh] bg-slate-50">
       <TopBar title="Chi tiết chiến dịch" back="/campaigns" right={<><Heart className="w-5 h-5" /><Share2 className="w-5 h-5" /></>} />
 
       <div className={`relative h-44 bg-gradient-to-br ${c.gradient} grid place-items-center`}>

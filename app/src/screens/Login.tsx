@@ -39,7 +39,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-brand-50 to-white flex flex-col">
+    <div className="min-h-[100svh] bg-gradient-to-b from-brand-50 to-white flex flex-col">
       <div className="pt-12 px-6 text-center">
         <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-brand-500 to-brand-700 grid place-items-center shadow-lg shadow-brand-600/30">
           <GraduationCap className="w-8 h-8 text-white" />

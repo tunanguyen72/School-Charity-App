@@ -25,7 +25,7 @@ export default function Campaigns() {
   const { data: list, loading, error } = useFetch(() => api.campaigns(f), [f])
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="min-h-[100svh] bg-slate-50">
       <TopBar title="Chiến dịch" right={<Bell className="w-5 h-5" />} />
       <div className="px-4 pt-4">
         <div className="relative">

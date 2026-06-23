@@ -29,7 +29,7 @@ export default function Transactions() {
   const disbursed = Number(summary?.disbursed ?? 0)
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="min-h-[100svh] bg-slate-50">
       <TopBar title="Sổ quỹ & Giao dịch" right={<BarChart3 className="w-5 h-5" />} />
 
       <Card className="mx-4 mt-4">

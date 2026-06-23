@@ -19,14 +19,14 @@ function Kpi({ icon, label, value, tone }: { icon: ReactNode; label: string; val
 export default function Stats() {
   const { data, loading, error } = useFetch(() => api.stats(), [])
 
-  if (loading) return <div className="min-h-full bg-slate-50"><TopBar title="Báo cáo minh bạch" back /><Loading /></div>
-  if (error || !data) return <div className="min-h-full bg-slate-50"><TopBar title="Báo cáo minh bạch" back /><ErrorBox message={error ?? 'Lỗi'} /></div>
+  if (loading) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Báo cáo minh bạch" back /><Loading /></div>
+  if (error || !data) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Báo cáo minh bạch" back /><ErrorBox message={error ?? 'Lỗi'} /></div>
 
   const o = data.overview
   const monthTotal = data.monthly.reduce((s, m) => s + m.total, 0)
 
   return (
-    <div className="min-h-full bg-slate-50 pb-6">
+    <div className="min-h-[100svh] bg-slate-50 pb-6">
       <TopBar title="Báo cáo minh bạch" back right={<Badge tone="green">🛡️ 100%</Badge>} />
 
       {/* Hero tổng quỹ */}

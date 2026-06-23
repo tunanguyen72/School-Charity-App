@@ -32,7 +32,7 @@ export default function Admin() {
 
   if (user?.role !== 'admin')
     return (
-      <div className="min-h-full bg-slate-50">
+      <div className="min-h-[100svh] bg-slate-50">
         <TopBar title="Quản trị" back="/home" />
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-2 px-8 text-center">
           <Lock className="w-9 h-9" />
@@ -62,7 +62,7 @@ export default function Admin() {
   const totalVerified = (expenses ?? []).filter((e) => e.status === 'verified').reduce((s, e) => s + Number(e.amount), 0)
 
   return (
-    <div className="min-h-full bg-slate-50 pb-4">
+    <div className="min-h-[100svh] bg-slate-50 pb-4">
       <TopBar title="Quản trị giải ngân" back="/home" right={<ShieldCheck className="w-5 h-5 text-emerald-500" />} />
 
       {/* stats */}

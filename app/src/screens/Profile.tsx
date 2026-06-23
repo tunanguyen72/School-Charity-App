@@ -22,7 +22,7 @@ export default function Profile() {
   const doLogout = () => { logout(); nav('/') }
 
   return (
-    <div className="min-h-full bg-slate-50 pb-4">
+    <div className="min-h-[100svh] bg-slate-50 pb-4">
       <TopBar title="Hồ sơ cá nhân" right={<button onClick={() => nav('/notifications')}><Bell className="w-5 h-5" /></button>} />
 
       <div className="mx-4 mt-4 bg-white rounded-2xl p-4 flex items-center gap-3">

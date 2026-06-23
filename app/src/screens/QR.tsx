@@ -46,7 +46,7 @@ export default function QR() {
   const { draft } = useApp()
 
   return (
-    <div className="min-h-full bg-slate-50 flex flex-col">
+    <div className="min-h-[100svh] bg-slate-50 flex flex-col">
       <TopBar title="Quét mã thanh toán" back={`/donate/${draft.campaignId}`} />
       <div className="flex-1 flex flex-col items-center px-6 pt-6 text-center">
         <p className="text-slate-500 text-sm">Mở app ngân hàng và quét mã QR bên dưới để chuyển <b className="text-brand-700">{vnd(draft.amount)}</b></p>

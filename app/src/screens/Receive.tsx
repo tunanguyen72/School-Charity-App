@@ -25,7 +25,7 @@ export default function Receive() {
   }
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="min-h-[100svh] bg-slate-50">
       <TopBar title="Nhận hiện vật" back="/inventory" />
       <div className="pt-4">
         <Field label="Tên đồ vật"><input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} /></Field>

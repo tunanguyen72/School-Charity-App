@@ -24,7 +24,7 @@ export default function Pay() {
   }
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-brand-800 to-brand-900 text-white flex flex-col">
+    <div className="min-h-[100svh] bg-gradient-to-b from-brand-800 to-brand-900 text-white flex flex-col">
       {/* fake browser bar */}
       <div className="bg-black/25 px-4 py-2.5 flex items-center gap-2 text-[11px] text-white/70">
         <Lock className="w-3.5 h-3.5" /> pay.cungemdentruong.vn

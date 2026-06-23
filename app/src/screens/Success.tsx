@@ -12,7 +12,7 @@ export default function Success() {
   const { data: c } = useFetch(() => api.campaign(draft.campaignId), [draft.campaignId])
 
   return (
-    <div className="min-h-full bg-slate-50 flex flex-col">
+    <div className="min-h-[100svh] bg-slate-50 flex flex-col">
       <div className="h-14 grid place-items-center bg-white border-b border-slate-100 font-bold text-brand-700">Cùng em đến trường</div>
       <div className="text-center px-6 pt-8 animate-slide-up">
         <div className="w-24 h-24 mx-auto rounded-full bg-emerald-100 grid place-items-center animate-pop">

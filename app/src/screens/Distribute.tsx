@@ -12,10 +12,10 @@ export default function Distribute() {
   const { data: batches, loading } = useFetch(() => api.inventory(), [])
   const b = batches?.find((x) => String(x.id) === id)
 
-  if (loading) return <div className="min-h-full bg-slate-50"><TopBar title="Phân phối hiện vật" back="/inventory" /><Loading /></div>
+  if (loading) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Phân phối hiện vật" back="/inventory" /><Loading /></div>
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="min-h-[100svh] bg-slate-50">
       <TopBar title="Phân phối hiện vật" back="/inventory" />
       {b && (
         <div className="mx-4 mt-4 bg-white rounded-2xl p-3 flex items-center gap-3">

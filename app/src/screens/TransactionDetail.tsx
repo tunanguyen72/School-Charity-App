@@ -10,15 +10,15 @@ export default function TransactionDetail() {
   const { data: ledger, loading, error } = useFetch(() => api.ledger(), [])
   const t = ledger?.find((x) => x.code === id)
 
-  if (loading) return <div className="min-h-full bg-slate-50"><TopBar title="Chi tiết giao dịch" back /><Loading /></div>
-  if (error || !t) return <div className="min-h-full bg-slate-50"><TopBar title="Chi tiết giao dịch" back /><ErrorBox message={error ?? 'Không tìm thấy giao dịch'} /></div>
+  if (loading) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Chi tiết giao dịch" back /><Loading /></div>
+  if (error || !t) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Chi tiết giao dịch" back /><ErrorBox message={error ?? 'Không tìm thấy giao dịch'} /></div>
 
   const amt = Number(t.amount)
   const isCost = amt < 0
   const dateStr = t.at ? new Date(t.at).toLocaleString('vi-VN') : '—'
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="min-h-[100svh] bg-slate-50">
       <TopBar title="Chi tiết giao dịch" back />
       <div className="text-center pt-7">
         <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto animate-pop" />

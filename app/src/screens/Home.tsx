@@ -17,7 +17,7 @@ export default function Home() {
   const o = stats?.overview
 
   return (
-    <div className="min-h-full bg-slate-50 pb-4">
+    <div className="min-h-[100svh] bg-slate-50 pb-4">
       <div className="px-5 pt-5 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Avatar initials={user?.fullName?.split(' ').slice(-1)[0][0] ?? 'U'} />

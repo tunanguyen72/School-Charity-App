@@ -22,7 +22,7 @@ export default function Notifications() {
   const groups = ['Hôm nay', 'Hôm qua', 'Trước đó']
 
   return (
-    <div className="min-h-full bg-slate-50 pb-4">
+    <div className="min-h-[100svh] bg-slate-50 pb-4">
       <TopBar title="Thông báo" back="/home" right={<CheckCheck className="w-5 h-5" />} />
       {loading && <Loading />}
       {error && <ErrorBox message={error} />}

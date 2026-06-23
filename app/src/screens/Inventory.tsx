@@ -21,7 +21,7 @@ export default function Inventory() {
   const given = total - stored
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="min-h-[100svh] bg-slate-50">
       <TopBar title="Kho hiện vật" right={<button onClick={() => nav('/inventory/receive')} className="p-1.5 rounded-full bg-brand-600 text-white active:scale-95"><Plus className="w-5 h-5" /></button>} />
 
       <div className="mx-4 mt-4 rounded-3xl p-5 text-white bg-gradient-to-br from-brand-500 to-brand-800 shadow-xl shadow-brand-700/30">

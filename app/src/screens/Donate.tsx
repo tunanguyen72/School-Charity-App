@@ -21,8 +21,8 @@ export default function Donate() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
-  if (loading) return <div className="min-h-full bg-slate-50"><TopBar title="Quyên góp" back /><Loading /></div>
-  if (error || !c) return <div className="min-h-full bg-slate-50"><TopBar title="Quyên góp" back /><ErrorBox message={error ?? 'Không tìm thấy'} /></div>
+  if (loading) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Quyên góp" back /><Loading /></div>
+  if (error || !c) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Quyên góp" back /><ErrorBox message={error ?? 'Không tìm thấy'} /></div>
 
   const proceed = async () => {
     setBusy(true); setErr('')
@@ -35,7 +35,7 @@ export default function Donate() {
   }
 
   return (
-    <div className="min-h-full bg-slate-50">
+    <div className="min-h-[100svh] bg-slate-50">
       <TopBar title="Quyên góp" back={`/campaign/${c.id}`} />
 
       <div className="mx-4 mt-4 bg-white rounded-2xl p-3 flex items-center gap-3">
