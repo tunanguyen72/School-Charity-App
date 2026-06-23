@@ -141,6 +141,30 @@ export const api = {
     request(`/expenses/${id}/verify`, { method: 'POST' }),
   rejectExpense: (id: number) =>
     request(`/expenses/${id}/reject`, { method: 'POST' }),
+
+  // ----- Quản trị: Chiến dịch (CRUD) -----
+  adminCampaign: (slug: string) => request<AdminCampaign>(`/admin/campaigns/${slug}`),
+  createCampaign: (data: CampaignInput) => request<{ slug: string }>('/admin/campaigns', { method: 'POST', body: JSON.stringify(data) }),
+  updateCampaign: (slug: string, data: CampaignInput) => request<{ slug: string }>(`/admin/campaigns/${slug}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCampaign: (slug: string) => request(`/admin/campaigns/${slug}`, { method: 'DELETE' }),
+
+  // ----- Quản trị: Người dùng -----
+  adminUsers: () => request<AdminUser[]>('/admin/users'),
+  setUserRole: (id: number, role: string) => request(`/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+}
+
+export interface MilestoneInput { label: string; dateLabel: string; description?: string; state: string }
+export interface CampaignInput {
+  title: string; location: string; status: string; story: string; goalAmount: number
+  bannerEmoji: string; endDate?: string | null; childrenHelped: number; milestones?: MilestoneInput[]
+}
+export interface AdminCampaign {
+  slug: string; title: string; location: string; status: string; story: string; goalAmount: string
+  bannerEmoji: string | null; endDate: string | null; childrenHelped: number
+  milestones: { label: string; dateLabel: string; description: string | null; state: string }[]
+}
+export interface AdminUser {
+  id: number; fullName: string; email: string; role: string; createdAt: string; donated: number; donationCount: number
 }
 
 export interface AdminExpense {

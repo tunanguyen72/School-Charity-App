@@ -271,6 +271,98 @@ app.post('/api/expenses/:id/reject', requireAuth, requireRole('admin'), async (r
   res.json(e)
 })
 
+// ===== Admin: Quản lý chiến dịch (CRUD) =====
+const slugify = (s: string) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
+    .toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 60)
+
+interface MilestoneInput { label: string; dateLabel?: string; description?: string; state?: string }
+
+app.get('/api/admin/campaigns/:slug', requireAuth, requireRole('admin'), async (req, res) => {
+  const c = await db.campaign.findUnique({ where: { slug: req.params.slug }, include: { milestones: { orderBy: { orderIndex: 'asc' } } } })
+  if (!c) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
+  res.json(c)
+})
+
+app.post('/api/admin/campaigns', requireAuth, requireRole('admin'), async (req, res) => {
+  const { title, location, status, story, goalAmount, bannerEmoji, endDate, childrenHelped, milestones } = req.body
+  if (!title?.trim()) return res.status(400).json({ error: 'Thiếu tên chiến dịch' })
+  const base = slugify(title) || 'chien-dich'
+  let slug = base, i = 1
+  while (await db.campaign.findUnique({ where: { slug } })) slug = `${base}-${i++}`
+  const ms = (milestones as MilestoneInput[] | undefined) ?? []
+  const c = await db.campaign.create({
+    data: {
+      title: title.trim(), slug, location: location ?? '', status: status ?? 'active', story: story ?? '',
+      goalAmount: BigInt(goalAmount || 0), bannerEmoji: bannerEmoji || '🎒',
+      endDate: endDate ? new Date(endDate) : null, childrenHelped: Number(childrenHelped) || 0,
+      isVerified: true, createdById: currentUser(req).id,
+      milestones: ms.length ? { create: ms.map((m, idx) => ({ label: m.label, dateLabel: m.dateLabel ?? '', description: m.description ?? '', state: m.state ?? 'todo', orderIndex: idx })) } : undefined,
+    },
+  })
+  await db.auditLog.create({ data: { actorId: currentUser(req).id, action: 'create', entityType: 'Campaign', entityId: c.id, reason: 'Tạo chiến dịch' } })
+  res.json(c)
+})
+
+app.put('/api/admin/campaigns/:slug', requireAuth, requireRole('admin'), async (req, res) => {
+  const existing = await db.campaign.findUnique({ where: { slug: req.params.slug } })
+  if (!existing) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
+  const { title, location, status, story, goalAmount, bannerEmoji, endDate, childrenHelped, milestones } = req.body
+  const c = await db.campaign.update({
+    where: { id: existing.id },
+    data: {
+      title: title ?? existing.title, location: location ?? existing.location, status: status ?? existing.status,
+      story: story ?? existing.story, goalAmount: goalAmount != null ? BigInt(goalAmount) : existing.goalAmount,
+      bannerEmoji: bannerEmoji ?? existing.bannerEmoji, endDate: endDate ? new Date(endDate) : existing.endDate,
+      childrenHelped: childrenHelped != null ? Number(childrenHelped) : existing.childrenHelped,
+    },
+  })
+  if (Array.isArray(milestones)) {
+    await db.campaignMilestone.deleteMany({ where: { campaignId: existing.id } })
+    const ms = milestones as MilestoneInput[]
+    if (ms.length) await db.campaignMilestone.createMany({ data: ms.map((m, idx) => ({ campaignId: existing.id, label: m.label, dateLabel: m.dateLabel ?? '', description: m.description ?? '', state: m.state ?? 'todo', orderIndex: idx })) })
+  }
+  await db.auditLog.create({ data: { actorId: currentUser(req).id, action: 'update', entityType: 'Campaign', entityId: existing.id, reason: 'Sửa chiến dịch' } })
+  res.json(c)
+})
+
+app.delete('/api/admin/campaigns/:slug', requireAuth, requireRole('admin'), async (req, res) => {
+  const existing = await db.campaign.findUnique({ where: { slug: req.params.slug } })
+  if (!existing) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
+  const id = existing.id
+  await db.$transaction([
+    db.distribution.deleteMany({ where: { batch: { campaignId: id } } }),
+    db.inkindBatch.deleteMany({ where: { campaignId: id } }),
+    db.donation.deleteMany({ where: { campaignId: id } }),
+    db.expense.deleteMany({ where: { campaignId: id } }),
+    db.campaignMilestone.deleteMany({ where: { campaignId: id } }),
+    db.mediaAsset.deleteMany({ where: { ownerType: 'campaign', ownerId: id } }),
+    db.campaign.delete({ where: { id } }),
+  ])
+  await db.auditLog.create({ data: { actorId: currentUser(req).id, action: 'void', entityType: 'Campaign', entityId: id, reason: 'Xóa chiến dịch' } })
+  res.json({ ok: true })
+})
+
+// ===== Admin: Quản lý người dùng =====
+app.get('/api/admin/users', requireAuth, requireRole('admin'), async (_req, res) => {
+  const users = await db.user.findMany({ orderBy: { createdAt: 'asc' }, select: { id: true, fullName: true, email: true, role: true, createdAt: true } })
+  const counts = await db.donation.groupBy({ by: ['donorId'], where: { status: 'success' }, _sum: { amount: true }, _count: true })
+  res.json(users.map((u) => {
+    const c = counts.find((x) => x.donorId === u.id)
+    return { ...u, donated: Number(c?._sum.amount ?? 0n), donationCount: c?._count ?? 0 }
+  }))
+})
+
+app.patch('/api/admin/users/:id/role', requireAuth, requireRole('admin'), async (req, res) => {
+  const id = Number(req.params.id)
+  const { role } = req.body
+  if (!['donor', 'tnv', 'admin'].includes(role)) return res.status(400).json({ error: 'Vai trò không hợp lệ' })
+  if (id === currentUser(req).id && role !== 'admin') return res.status(400).json({ error: 'Không thể tự hạ quyền của chính mình' })
+  const u = await db.user.update({ where: { id }, data: { role }, select: { id: true, fullName: true, role: true } })
+  await db.auditLog.create({ data: { actorId: currentUser(req).id, action: 'update', entityType: 'User', entityId: id, reason: 'Đổi vai trò → ' + role } })
+  res.json(u)
+})
+
 // ===== Phục vụ bản build frontend (cùng origin với API) =====
 const distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../app/dist')
 const indexHtml = path.join(distDir, 'index.html')

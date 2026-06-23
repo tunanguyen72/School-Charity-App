@@ -63,7 +63,7 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-3 px-4 mt-3">
           <Card className="!p-3.5 flex items-center gap-2.5" onClick={() => nav('/admin')}>
             <span className="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 grid place-items-center"><HeartHandshake className="w-5 h-5" /></span>
-            <div><div className="font-bold text-sm text-slate-800">Giải ngân</div><div className="text-[11px] text-slate-400">Duyệt & chứng từ</div></div>
+            <div><div className="font-bold text-sm text-slate-800">Quản trị</div><div className="text-[11px] text-slate-400">Chiến dịch, giải ngân, người dùng</div></div>
           </Card>
           <Card className="!p-3.5 flex items-center gap-2.5" onClick={() => nav('/inventory')}>
             <span className="w-9 h-9 rounded-xl bg-brand-100 text-brand-600 grid place-items-center"><PackageCheck className="w-5 h-5" /></span>

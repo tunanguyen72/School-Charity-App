@@ -1,22 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShieldCheck, BadgeCheck, XCircle, Clock, Loader2, Plus, Lock } from 'lucide-react'
-import { api, type AdminExpense } from '../api'
-import type { UICampaign } from '../api'
-import { useApp } from '../store'
-import { vnd, vndShort } from '../format'
-import { Button, Card, Badge, TopBar, Field, Loading, inputCls } from '../ui'
+import { ShieldCheck, BadgeCheck, XCircle, Clock, Loader2, Plus } from 'lucide-react'
+import { api, type AdminExpense, type UICampaign } from '../../api'
+import { vnd, vndShort } from '../../format'
+import { Button, Card, Badge, TopBar, Field, Loading, inputCls } from '../../ui'
 
 const typeLabel = (t: string) => (t === 'disbursement' ? 'Giải ngân' : 'Chi phí TNV')
 
-export default function Admin() {
+export default function Disbursement() {
   const nav = useNavigate()
-  const { user } = useApp()
   const [expenses, setExpenses] = useState<AdminExpense[] | null>(null)
   const [campaigns, setCampaigns] = useState<UICampaign[]>([])
   const [busyId, setBusyId] = useState<number | null>(null)
 
-  // form
   const [slug, setSlug] = useState('')
   const [title, setTitle] = useState('')
   const [amount, setAmount] = useState('')
@@ -28,21 +24,10 @@ export default function Admin() {
     setExpenses(e); setCampaigns(c)
     if (!slug && c[0]) setSlug(c[0].id)
   }
-  useEffect(() => { if (user?.role === 'admin') load() }, [user?.role]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (user?.role !== 'admin')
-    return (
-      <div className="min-h-[100svh] bg-slate-50">
-        <TopBar title="Quản trị" back="/home" />
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-2 px-8 text-center">
-          <Lock className="w-9 h-9" />
-          <p className="text-sm">Khu vực này chỉ dành cho <b>Admin</b>. Hãy đăng nhập bằng tài khoản quản trị.</p>
-        </div>
-      </div>
-    )
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const create = async () => {
-    if (!title || !amount) { setErr('Nhập đủ tiêu đề và số tiền'); return }
+    if (!title || !amount) { setErr('Nhập đủ nội dung và số tiền'); return }
     setCreating(true); setErr('')
     try {
       await api.createExpense(slug, title, Number(amount), 'disbursement')
@@ -63,16 +48,14 @@ export default function Admin() {
 
   return (
     <div className="min-h-[100svh] bg-slate-50 pb-4">
-      <TopBar title="Quản trị giải ngân" back="/home" right={<ShieldCheck className="w-5 h-5 text-emerald-500" />} />
+      <TopBar title="Giải ngân & chi phí" back="/admin" right={<ShieldCheck className="w-5 h-5 text-emerald-500" />} />
 
-      {/* stats */}
       <div className="grid grid-cols-3 gap-2 px-4 pt-4">
         {[[`${pending.length}`, 'CHỜ DUYỆT', 'text-amber-600'], [vndShort(totalVerified), 'ĐÃ GIẢI NGÂN', 'text-emerald-600'], [`${expenses?.length ?? 0}`, 'TỔNG KHOẢN', 'text-brand-700']].map(([a, b, c]) => (
           <Card key={b} className="!p-3 text-center"><div className={`font-extrabold text-base ${c}`}>{a}</div><div className="text-[10px] text-slate-400 mt-0.5">{b}</div></Card>
         ))}
       </div>
 
-      {/* create form */}
       <h2 className="text-base font-extrabold text-slate-800 px-5 mt-5 mb-2">Tạo khoản giải ngân</h2>
       <Card className="mx-4 !p-4">
         <Field label="Chiến dịch">
@@ -86,7 +69,6 @@ export default function Admin() {
         <div className="px-1"><Button onClick={create} disabled={creating}>{creating ? <Loader2 className="w-5 h-5 animate-spin-slow" /> : <><Plus className="w-4 h-4" /> Tạo khoản chi</>}</Button></div>
       </Card>
 
-      {/* pending approvals */}
       <h2 className="text-base font-extrabold text-slate-800 px-5 mt-5 mb-2">Chờ xác minh / duyệt</h2>
       {expenses === null && <Loading />}
       {expenses && pending.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Không có khoản nào chờ xử lý 🎉</p>}
@@ -108,12 +90,10 @@ export default function Admin() {
                 {busyId === e.id ? <Loader2 className="w-3.5 h-3.5 animate-spin-slow" /> : <BadgeCheck className="w-3.5 h-3.5" />} Xác minh
               </button>
             </div>
-            <div className="text-[11px] text-slate-400 mt-2">📎 “Xác minh” sẽ đính kèm chứng từ và công khai ở tab Chi phí của chiến dịch.</div>
           </Card>
         ))}
       </div>
 
-      {/* resolved */}
       {resolved.length > 0 && (
         <>
           <h2 className="text-base font-extrabold text-slate-800 px-5 mt-5 mb-2">Đã xử lý</h2>

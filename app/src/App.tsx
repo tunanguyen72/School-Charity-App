@@ -15,8 +15,13 @@ import Transactions from './screens/Transactions'
 import TransactionDetail from './screens/TransactionDetail'
 import Profile from './screens/Profile'
 import Notifications from './screens/Notifications'
-import Admin from './screens/Admin'
 import Stats from './screens/Stats'
+import AdminLayout from './screens/admin/AdminLayout'
+import AdminHome from './screens/admin/AdminHome'
+import CampaignManage from './screens/admin/CampaignManage'
+import CampaignForm from './screens/admin/CampaignForm'
+import Disbursement from './screens/admin/Disbursement'
+import Users from './screens/admin/Users'
 
 export default function App() {
   return (
@@ -37,8 +42,15 @@ export default function App() {
         <Route path="/transaction/:id" element={<TransactionDetail />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/notifications" element={<Notifications />} />
-        <Route path="/admin" element={<Admin />} />
         <Route path="/stats" element={<Stats />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminHome />} />
+          <Route path="campaigns" element={<CampaignManage />} />
+          <Route path="campaigns/new" element={<CampaignForm />} />
+          <Route path="campaigns/:slug/edit" element={<CampaignForm />} />
+          <Route path="disbursement" element={<Disbursement />} />
+          <Route path="users" element={<Users />} />
+        </Route>
       </Route>
     </Routes>
   )
