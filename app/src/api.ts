@@ -7,21 +7,44 @@ const TOKEN_KEY = 'cedt_token'
 export const getToken = () => localStorage.getItem(TOKEN_KEY)
 export const setToken = (t: string | null) => (t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY))
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+const COLD = 'Máy chủ đang khởi động, vui lòng thử lại sau giây lát.'
+
 async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   const token = getToken()
-  const res = await fetch(BASE + path, {
-    ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(opts.headers ?? {}),
-    },
-  })
-  if (!res.ok) {
+  const method = (opts.method ?? 'GET').toUpperCase()
+  // GET tự thử lại khi server "ngủ" (cold start) trả 502/503/504 hoặc lỗi mạng
+  const maxTries = method === 'GET' ? 4 : 1
+
+  for (let attempt = 1; attempt <= maxTries; attempt++) {
+    let res: Response
+    try {
+      res = await fetch(BASE + path, {
+        ...opts,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(opts.headers ?? {}),
+        },
+      })
+    } catch {
+      // lỗi mạng (server chưa dậy)
+      if (attempt < maxTries) { await sleep(attempt * 1500); continue }
+      throw new Error(COLD)
+    }
+
+    if (res.ok) return res.json()
+
+    // 502/503/504 = server đang khởi động/quá tải -> thử lại (GET) hoặc báo thân thiện
+    if ([502, 503, 504].includes(res.status)) {
+      if (attempt < maxTries) { await sleep(attempt * 1500); continue }
+      throw new Error(COLD)
+    }
+
     const body = await res.json().catch(() => ({}))
     throw new Error(body.error ?? `Lỗi ${res.status}`)
   }
-  return res.json()
+  throw new Error(COLD)
 }
 
 // ---- Kiểu dữ liệu thô từ API ----

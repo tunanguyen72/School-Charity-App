@@ -1,4 +1,5 @@
-import express, { type Request } from 'express'
+import express, { type Request, type Response, type NextFunction } from 'express'
+import 'express-async-errors' // tự bắt lỗi trong route async -> đẩy sang error handler (không sập tiến trình)
 import cors from 'cors'
 import bcrypt from 'bcryptjs'
 import path from 'node:path'
@@ -6,6 +7,10 @@ import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { db } from './db.js'
 import { signToken, requireAuth, requireRole, type AuthUser } from './auth.js'
+
+// Mạng an toàn: không để lỗi ngoài request làm sập tiến trình (tránh 502 hàng loạt)
+process.on('unhandledRejection', (reason) => console.error('[unhandledRejection]', reason))
+process.on('uncaughtException', (err) => console.error('[uncaughtException]', err))
 
 const app = express()
 app.use(cors())
@@ -278,6 +283,13 @@ if (fs.existsSync(indexHtml)) {
   })
   console.log('📦 Đang phục vụ frontend từ', distDir)
 }
+
+// Error handler toàn cục — mọi lỗi route trả 500 JSON (server vẫn sống, không 502)
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('[API error]', err)
+  if (res.headersSent) return
+  res.status(500).json({ error: 'Lỗi máy chủ: ' + (err?.message ?? 'không xác định') })
+})
 
 const PORT = Number(process.env.PORT) || 4000
 app.listen(PORT, () => console.log(`🚀 "Cùng em đến trường" chạy tại http://localhost:${PORT}`))
