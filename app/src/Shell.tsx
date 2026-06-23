@@ -88,9 +88,9 @@ export default function Shell() {
   const redirect = !user && pathname !== '/' ? '/' : user && pathname === '/' ? '/home' : null
 
   return (
-    <div className="min-h-screen w-full bg-slate-100 flex justify-center">
+    <div className="min-h-screen w-full bg-slate-50 flex justify-center">
       <div
-        className="relative w-full max-w-[480px] min-h-screen bg-slate-50 overflow-x-hidden"
+        className="relative w-full max-w-[480px] min-h-screen bg-slate-50 overflow-x-hidden sm:shadow-2xl sm:shadow-black/5"
         style={{ paddingBottom: hideNav ? 0 : 'calc(72px + env(safe-area-inset-bottom))' }}
       >
         {redirect ? <Navigate to={redirect} replace /> : <Outlet />}
