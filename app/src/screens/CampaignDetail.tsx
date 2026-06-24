@@ -70,11 +70,17 @@ export default function CampaignDetail() {
               ))}
             </div>
             <h3 className="font-extrabold text-slate-800 mt-3 mb-3">Hình ảnh thực tế</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {[0, 1].map((i) => (
-                <div key={i} className="h-24 rounded-2xl bg-slate-200 grid place-items-center text-slate-400"><ImageIcon className="w-7 h-7" /></div>
-              ))}
-            </div>
+            {c.photos.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {c.photos.map((p, i) => <img key={i} src={p} alt="Ảnh thực tế" className="h-28 w-full object-cover rounded-2xl" />)}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {[0, 1].map((i) => (
+                  <div key={i} className="h-24 rounded-2xl bg-slate-200 grid place-items-center text-slate-300"><ImageIcon className="w-7 h-7" /></div>
+                ))}
+              </div>
+            )}
           </>
         )}
 

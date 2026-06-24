@@ -68,7 +68,7 @@ export default function TnvHome() {
             <span className="text-[11px] text-slate-400">{new Date(r.at).toLocaleDateString('vi-VN')}</span>
           </Card>
         ))}
-        <button onClick={() => nav('/inventory')} className="w-full flex items-center justify-center gap-1.5 text-brand-600 text-sm font-semibold py-2">Xem kho hiện vật <ArrowRight className="w-4 h-4" /></button>
+        <button onClick={() => nav('/distributions')} className="w-full flex items-center justify-center gap-1.5 text-brand-600 text-sm font-semibold py-2">Xem lịch sử phân phối đầy đủ <ArrowRight className="w-4 h-4" /></button>
       </div>
     </div>
   )

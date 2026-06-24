@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Camera, Info, Loader2 } from 'lucide-react'
+import { Camera, Info, Loader2, X } from 'lucide-react'
 import { api } from '../api'
 import { useFetch } from '../useFetch'
+import { compressImage } from '../img'
 import { Button, Field, TopBar, Loading, ErrorBox, inputCls } from '../ui'
 
 const emojiFor = (cat: string) => (cat === 'book' ? '📚' : cat === 'clothing' ? '🧥' : cat === 'supplies' ? '✏️' : '📦')
@@ -17,8 +18,19 @@ export default function Distribute() {
   const [beneficiaryId, setBeneficiaryId] = useState<number | ''>('')
   const [qty, setQty] = useState('')
   const [note, setNote] = useState('')
+  const [photo, setPhoto] = useState('')
+  const [photoBusy, setPhotoBusy] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const onPick = async (file?: File) => {
+    if (!file) return
+    setPhotoBusy(true); setErr('')
+    try { setPhoto(await compressImage(file)) }
+    catch (e) { setErr((e as Error).message) }
+    finally { setPhotoBusy(false) }
+  }
 
   // chọn mặc định điểm trường đầu tiên & số lượng gợi ý
   useEffect(() => { if (bens && bens[0]) setBeneficiaryId((v) => (v === '' ? bens[0].id : v)) }, [bens])
@@ -30,7 +42,7 @@ export default function Distribute() {
     if (!(n > 0) || n > b.quantityRemaining) { setErr(`Số lượng phải từ 1 đến ${b.quantityRemaining}`); return }
     if (!beneficiaryId) { setErr('Chọn điểm trường nhận'); return }
     setBusy(true); setErr('')
-    try { await api.distribute(b.id, Number(beneficiaryId), n, note); nav('/inventory') }
+    try { await api.distribute(b.id, Number(beneficiaryId), n, note, photo || undefined); nav('/inventory') }
     catch (e) { setErr((e as Error).message) }
     finally { setBusy(false) }
   }
@@ -58,9 +70,17 @@ export default function Distribute() {
         </Field>
         <Field label="Ghi chú (tuỳ chọn)"><input className={inputCls} placeholder="VD: Trao tận lớp học buổi sáng" value={note} onChange={(e) => setNote(e.target.value)} /></Field>
         <Field label="Ảnh trao tặng (minh chứng)">
-          <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 grid place-items-center text-slate-400 bg-white">
-            <div className="text-center"><Camera className="w-7 h-7 mx-auto" /><span className="text-xs">Chụp ảnh trao tặng</span></div>
-          </div>
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => onPick(e.target.files?.[0])} />
+          {photo ? (
+            <div className="relative">
+              <img src={photo} alt="Ảnh trao tặng" className="w-full h-44 object-cover rounded-2xl" />
+              <button onClick={() => { setPhoto(''); if (fileRef.current) fileRef.current.value = '' }} className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/55 text-white grid place-items-center"><X className="w-4 h-4" /></button>
+            </div>
+          ) : (
+            <button onClick={() => fileRef.current?.click()} className="w-full h-28 rounded-2xl border-2 border-dashed border-slate-300 grid place-items-center text-slate-400 bg-white active:bg-slate-50">
+              {photoBusy ? <Loader2 className="w-7 h-7 animate-spin-slow" /> : <div className="text-center"><Camera className="w-7 h-7 mx-auto" /><span className="text-xs">Chụp / chọn ảnh trao tặng</span></div>}
+            </button>
+          )}
         </Field>
         <div className="mx-5 text-[12px] text-brand-700 bg-brand-50 rounded-xl px-3 py-2.5 flex items-start gap-2">
           <Info className="w-4 h-4 mt-0.5 shrink-0" /> Sau khi xác nhận, tồn kho sẽ trừ tự động và ảnh lên mục “Hình ảnh thực tế” của chiến dịch.

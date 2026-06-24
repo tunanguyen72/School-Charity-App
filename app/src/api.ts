@@ -56,6 +56,7 @@ interface ApiCampaign {
   milestones?: { label: string; dateLabel: string; description: string | null; state: string }[]
   donations?: { amount: string; isAnonymous: boolean; confirmedAt: string | null; donor: { fullName: string } }[]
   expenses?: { title: string; amount: string }[]
+  photos?: (string | null)[]
 }
 
 // ---- Shape cho UI ----
@@ -82,6 +83,7 @@ export interface UICampaign {
   roadmap: { label: string; date: string; desc: string; state: string }[]
   topDonors: { name: string; amount: number; when: string; anon: boolean }[]
   costs: { label: string; amount: number; icon: string }[]
+  photos: string[]
 }
 
 function adaptCampaign(c: ApiCampaign): UICampaign {
@@ -96,6 +98,7 @@ function adaptCampaign(c: ApiCampaign): UICampaign {
       when: d.confirmedAt ? new Date(d.confirmedAt).toLocaleDateString('vi-VN') : 'gần đây',
     })),
     costs: (c.expenses ?? []).map((e) => ({ label: e.title, amount: Number(e.amount), icon: costIcon(e.title) })),
+    photos: (c.photos ?? []).filter((p): p is string => !!p),
   }
 }
 
@@ -124,8 +127,9 @@ export const api = {
 
   // ----- TNV: hiện trường -----
   myField: () => request<TnvField>('/my/field'),
-  distribute: (batchId: number, beneficiaryId: number, quantity: number, note: string) =>
-    request('/distributions', { method: 'POST', body: JSON.stringify({ batchId, beneficiaryId, quantity, note }) }),
+  distribute: (batchId: number, beneficiaryId: number, quantity: number, note: string, photo?: string) =>
+    request('/distributions', { method: 'POST', body: JSON.stringify({ batchId, beneficiaryId, quantity, note, photo }) }),
+  distributions: () => request<DistributionRow[]>('/distributions'),
   submitFieldExpense: (campaignSlug: string, title: string, amount: number) =>
     request('/field-expenses', { method: 'POST', body: JSON.stringify({ campaignSlug, title, amount }) }),
   myFieldExpenses: () => request<FieldExpense[]>('/my/field-expenses'),
@@ -188,6 +192,11 @@ export interface FieldExpense {
 }
 export interface Beneficiary {
   id: number; name: string; province: string; location: string | null; distributionCount: number
+}
+export interface DistributionRow {
+  id: number; item: string; unit: string; category: string; campaign: string
+  quantity: number; note: string | null; photoUrl: string | null; by: string
+  to: string; province: string; at: string
 }
 
 export interface AdminExpense {

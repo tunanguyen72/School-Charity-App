@@ -157,7 +157,12 @@ app.get('/api/campaigns/:slug', async (req, res) => {
     },
   })
   if (!c) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
-  res.json(c)
+  // Ảnh thực tế = ảnh từ các lần phân phối có ảnh của chiến dịch này
+  const photoRows = await db.distribution.findMany({
+    where: { batch: { campaignId: c.id }, photoUrl: { not: null } },
+    orderBy: { distributedAt: 'desc' }, take: 6, select: { photoUrl: true },
+  })
+  res.json({ ...c, photos: photoRows.map((p) => p.photoUrl) })
 })
 
 // --- Quyên góp: tạo (pending) → trả QR/mã giao dịch ---
@@ -275,22 +280,40 @@ app.post('/api/expenses/:id/reject', requireAuth, requireRole('admin'), async (r
 
 // ===== TNV: Phân phối hiện vật (trừ tồn kho thật) =====
 app.post('/api/distributions', requireAuth, requireRole('tnv', 'admin'), async (req, res) => {
-  const { batchId, beneficiaryId, quantity, note } = req.body
+  const { batchId, beneficiaryId, quantity, note, photo } = req.body
   const qty = Number(quantity)
   const batch = await db.inkindBatch.findUnique({ where: { id: Number(batchId) } })
   if (!batch) return res.status(404).json({ error: 'Không tìm thấy lô hiện vật' })
   if (!(qty > 0) || qty > batch.quantityRemaining) return res.status(400).json({ error: `Số lượng không hợp lệ (tồn ${batch.quantityRemaining})` })
+  // ảnh là data URL đã nén ở client; giới hạn ~2MB cho an toàn
+  const photoUrl = typeof photo === 'string' && photo.startsWith('data:image') && photo.length < 2_500_000 ? photo : null
   const me = currentUser(req)
   const result = await db.$transaction(async (tx) => {
-    const dist = await tx.distribution.create({ data: { batchId: batch.id, beneficiaryId: Number(beneficiaryId), quantity: qty, note: note ?? '', distributedById: me.id } })
+    const dist = await tx.distribution.create({ data: { batchId: batch.id, beneficiaryId: Number(beneficiaryId), quantity: qty, note: note ?? '', photoUrl, distributedById: me.id } })
     const remaining = batch.quantityRemaining - qty
     await tx.inkindBatch.update({ where: { id: batch.id }, data: { quantityRemaining: remaining, status: remaining <= 0 ? 'given' : 'partial' } })
     await tx.campaign.update({ where: { id: batch.campaignId }, data: { inkindGiven: { increment: qty } } })
-    await tx.mediaAsset.create({ data: { url: `/uploads/distribution-${dist.id}.jpg`, kind: 'distribution_photo', ownerType: 'campaign', ownerId: batch.campaignId, uploadedById: me.id } })
     await tx.auditLog.create({ data: { actorId: me.id, action: 'create', entityType: 'Distribution', entityId: dist.id, reason: `Trao ${qty} ${batch.unit} ${batch.name}` } })
     return dist
   })
   res.json(result)
+})
+
+// Lịch sử phân phối đầy đủ (kèm ảnh)
+app.get('/api/distributions', requireAuth, requireRole('tnv', 'admin'), async (_req, res) => {
+  const list = await db.distribution.findMany({
+    orderBy: { distributedAt: 'desc' },
+    include: {
+      batch: { select: { name: true, unit: true, category: true, campaign: { select: { title: true } } } },
+      beneficiary: { select: { name: true, province: true } },
+      distributedBy: { select: { fullName: true } },
+    },
+  })
+  res.json(list.map((d) => ({
+    id: d.id, item: d.batch.name, unit: d.batch.unit, category: d.batch.category, campaign: d.batch.campaign.title,
+    quantity: d.quantity, note: d.note, photoUrl: d.photoUrl, by: d.distributedBy.fullName,
+    to: d.beneficiary.name, province: d.beneficiary.province, at: d.distributedAt,
+  })))
 })
 
 // ===== TNV: Chi phí thực địa (gửi admin duyệt) =====

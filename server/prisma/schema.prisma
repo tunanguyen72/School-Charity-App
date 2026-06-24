@@ -125,6 +125,7 @@ model Distribution {
   beneficiary    Beneficiary @relation(fields: [beneficiaryId], references: [id])
   quantity       Int
   note           String?
+  photoUrl       String? // ảnh trao tặng thật (data URL đã nén)
   distributedById Int
   distributedBy  User        @relation("DistributedBy", fields: [distributedById], references: [id])
   distributedAt  DateTime    @default(now())

@@ -18,6 +18,7 @@ import Notifications from './screens/Notifications'
 import Stats from './screens/Stats'
 import FieldExpense from './screens/tnv/FieldExpense'
 import Beneficiaries from './screens/tnv/Beneficiaries'
+import Distributions from './screens/tnv/Distributions'
 import AdminLayout from './screens/admin/AdminLayout'
 import AdminHome from './screens/admin/AdminHome'
 import CampaignManage from './screens/admin/CampaignManage'
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="/stats" element={<Stats />} />
         <Route path="/field-expense" element={<FieldExpense />} />
         <Route path="/beneficiaries" element={<Beneficiaries />} />
+        <Route path="/distributions" element={<Distributions />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminHome />} />
           <Route path="campaigns" element={<CampaignManage />} />

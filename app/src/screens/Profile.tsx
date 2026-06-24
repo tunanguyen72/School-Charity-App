@@ -81,6 +81,7 @@ export default function Profile() {
         <h2 className="text-base font-extrabold text-slate-800 px-5 mt-5 mb-2">Nghiệp vụ</h2>
         <MenuList items={[
           { icon: Package, label: 'Kho hiện vật', to: '/inventory' },
+          { icon: ScrollText, label: 'Lịch sử phân phối', to: '/distributions' },
           { icon: Receipt, label: 'Chi phí thực địa', to: '/field-expense' },
           { icon: MapPin, label: 'Điểm trường', to: '/beneficiaries' },
           { icon: BarChart3, label: 'Báo cáo minh bạch', to: '/stats' },
