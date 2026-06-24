@@ -14,21 +14,14 @@ interface DonationDraft {
 interface AppState {
   user: ApiUser | null
   role: Role
-  login: (email: string, password: string) => Promise<void>
-  register: (fullName: string, email: string, password: string) => Promise<void>
-  quickLogin: (role: Role) => Promise<void>
+  login: (email: string, password: string) => Promise<ApiUser>
+  register: (fullName: string, email: string, password: string, role: 'donor' | 'tnv') => Promise<ApiUser>
   logout: () => void
   draft: DonationDraft
   setDraft: (d: Partial<DonationDraft>) => void
 }
 
 const Ctx = createContext<AppState | null>(null)
-
-const DEMO: Record<Role, string> = {
-  donor: 'huong@example.com',
-  tnv: 'khai@example.com',
-  admin: 'lan@example.com',
-}
 
 const USER_KEY = 'cedt_user'
 const loadUser = (): ApiUser | null => {
@@ -45,19 +38,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setToken(token)
     localStorage.setItem(USER_KEY, JSON.stringify(u))
     setUser(u)
+    return u
   }
 
   const login = async (email: string, password: string) => {
     const { token, user } = await api.login(email, password)
-    applyAuth(token, user)
+    return applyAuth(token, user)
   }
-  const register = async (fullName: string, email: string, password: string) => {
-    const { token, user } = await api.register(fullName, email, password)
-    applyAuth(token, user)
-  }
-  const quickLogin = async (role: Role) => {
-    const { token, user } = await api.login(DEMO[role], '123456')
-    applyAuth(token, user)
+  const register = async (fullName: string, email: string, password: string, role: 'donor' | 'tnv') => {
+    const { token, user } = await api.register(fullName, email, password, role)
+    return applyAuth(token, user)
   }
   const logout = () => {
     setToken(null)
@@ -68,7 +58,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setDraft = (d: Partial<DonationDraft>) => setDraftState((prev) => ({ ...prev, ...d }))
 
   return (
-    <Ctx.Provider value={{ user, role: (user?.role as Role) ?? 'donor', login, register, quickLogin, logout, draft, setDraft }}>
+    <Ctx.Provider value={{ user, role: (user?.role as Role) ?? 'donor', login, register, logout, draft, setDraft }}>
       {children}
     </Ctx.Provider>
   )

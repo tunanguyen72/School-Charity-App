@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { LayoutGrid, HandCoins, Users, ChevronRight, ShieldCheck } from 'lucide-react'
+import { LayoutGrid, HandCoins, Users, ChevronRight, ShieldCheck, BarChart3 } from 'lucide-react'
 import { api } from '../../api'
 import { useFetch } from '../../useFetch'
 import { vndShort } from '../../format'
@@ -9,6 +9,7 @@ const sections = [
   { icon: LayoutGrid, label: 'Quản lý chiến dịch', desc: 'Tạo, sửa, xóa chiến dịch', to: '/admin/campaigns', tone: 'bg-brand-100 text-brand-600' },
   { icon: HandCoins, label: 'Giải ngân & chi phí', desc: 'Tạo khoản chi, duyệt chứng từ', to: '/admin/disbursement', tone: 'bg-rose-100 text-rose-600' },
   { icon: Users, label: 'Người dùng & phân quyền', desc: 'Cấp quyền TNV / Admin', to: '/admin/users', tone: 'bg-violet-100 text-violet-600' },
+  { icon: BarChart3, label: 'Báo cáo minh bạch', desc: 'Biểu đồ quỹ, phân bổ, top góp', to: '/stats', tone: 'bg-emerald-100 text-emerald-600' },
 ]
 
 export default function AdminHome() {
@@ -18,7 +19,7 @@ export default function AdminHome() {
 
   return (
     <div className="min-h-[100svh] bg-slate-50 pb-6">
-      <TopBar title="Bảng quản trị" back="/home" right={<ShieldCheck className="w-5 h-5 text-emerald-500" />} />
+      <TopBar title="Bảng quản trị" right={<ShieldCheck className="w-5 h-5 text-emerald-500" />} />
 
       <div className="mx-4 mt-4 rounded-3xl p-5 text-white bg-gradient-to-br from-brand-600 to-brand-900 shadow-xl shadow-brand-700/30">
         <div className="text-[13px] text-white/80">Tổng quan hệ thống</div>

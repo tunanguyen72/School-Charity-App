@@ -103,8 +103,8 @@ function adaptCampaign(c: ApiCampaign): UICampaign {
 export const api = {
   login: (email: string, password: string) =>
     request<{ token: string; user: ApiUser }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  register: (fullName: string, email: string, password: string) =>
-    request<{ token: string; user: ApiUser }>('/auth/register', { method: 'POST', body: JSON.stringify({ fullName, email, password }) }),
+  register: (fullName: string, email: string, password: string, role: 'donor' | 'tnv') =>
+    request<{ token: string; user: ApiUser }>('/auth/register', { method: 'POST', body: JSON.stringify({ fullName, email, password, role }) }),
 
   summary: () => request<{ totalRaised: string; disbursed: string; inkindSets: number; projects: number }>('/summary'),
 

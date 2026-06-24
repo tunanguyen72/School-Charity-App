@@ -21,12 +21,14 @@ const currentUser = (req: Request) => (req as Request & { user: AuthUser }).user
 
 // ===== Xác thực =====
 app.post('/api/auth/register', async (req, res) => {
-  const { fullName, email, password } = req.body
+  const { fullName, email, password, role } = req.body
   if (!fullName || !email || !password) return res.status(400).json({ error: 'Thiếu thông tin' })
+  // Chỉ cho tự đăng ký donor hoặc tnv — KHÔNG cho tự tạo admin
+  const safeRole = role === 'tnv' ? 'tnv' : 'donor'
   const existing = await db.user.findUnique({ where: { email } })
   if (existing) return res.status(409).json({ error: 'Email đã được đăng ký' })
   const user = await db.user.create({
-    data: { fullName, email, passwordHash: bcrypt.hashSync(password, 10), role: 'donor' },
+    data: { fullName, email, passwordHash: bcrypt.hashSync(password, 10), role: safeRole },
   })
   const auth: AuthUser = { id: user.id, email: user.email, role: user.role, fullName: user.fullName }
   res.json({ token: signToken(auth), user: auth })

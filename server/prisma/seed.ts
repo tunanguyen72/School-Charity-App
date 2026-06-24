@@ -21,7 +21,7 @@ async function main() {
   // ===== Users =====
   const huong = await db.user.create({ data: { fullName: 'Cô Hương', email: 'huong@example.com', role: 'donor', passwordHash: pw } })
   const khai = await db.user.create({ data: { fullName: 'Anh Khải', email: 'khai@example.com', role: 'tnv', passwordHash: pw } })
-  const lan = await db.user.create({ data: { fullName: 'Chị Lan', email: 'lan@example.com', role: 'admin', passwordHash: pw } })
+  const lan = await db.user.create({ data: { fullName: 'Quản trị viên', email: 'admin@gmail.com', role: 'admin', passwordHash: pw } })
   // nhà hảo tâm khác (để thống kê top donors phong phú)
   const an = await db.user.create({ data: { fullName: 'Nguyễn Văn An', email: 'an@example.com', role: 'donor', passwordHash: pw } })
   const binh = await db.user.create({ data: { fullName: 'Trần Bình', email: 'binh@example.com', role: 'donor', passwordHash: pw } })

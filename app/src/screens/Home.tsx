@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Bell, TrendingUp, ChevronRight, HeartHandshake, PackageCheck, BarChart3 } from 'lucide-react'
+import { Bell, TrendingUp, ChevronRight, BarChart3 } from 'lucide-react'
 import { useApp } from '../store'
 import { api } from '../api'
 import { useFetch } from '../useFetch'
@@ -8,8 +8,7 @@ import { Avatar, Badge, Button, Card, Progress, SectionTitle, Loading, ErrorBox 
 
 export default function Home() {
   const nav = useNavigate()
-  const { user, role } = useApp()
-  const isAdmin = role === 'admin'
+  const { user } = useApp()
 
   const { data: stats } = useFetch(() => api.stats(), [])
   const { data: campaigns, loading, error } = useFetch(() => api.campaigns(), [])
@@ -35,7 +34,7 @@ export default function Home() {
       {/* Hero */}
       <div className="mx-4 rounded-3xl p-5 text-white bg-gradient-to-br from-brand-500 to-brand-800 shadow-xl shadow-brand-700/30 relative overflow-hidden">
         <div className="absolute -right-8 -top-10 w-36 h-36 rounded-full bg-white/10" />
-        <div className="text-[13px] text-white/80 relative">{isAdmin ? 'Tổng quỹ tổ chức' : 'Tổng quỹ đã nhận'}</div>
+        <div className="text-[13px] text-white/80 relative">Tổng quỹ đã nhận</div>
         <div className="text-[34px] font-extrabold tracking-tight leading-none mt-1 relative">{vnd(o?.totalRaised ?? 0)}</div>
         <div className="flex items-center gap-2 mt-1.5 text-[13px] text-white/85 relative">
           + {o?.inkindTotal ?? 0} món hiện vật
@@ -57,20 +56,6 @@ export default function Home() {
         <div className="flex-1 text-left"><div className="font-bold text-sm text-slate-800">Báo cáo minh bạch</div><div className="text-[11px] text-slate-400">Biểu đồ quỹ, phân bổ & top nhà hảo tâm</div></div>
         <ChevronRight className="w-4 h-4 text-slate-300" />
       </button>
-
-      {/* Admin quick actions */}
-      {isAdmin && (
-        <div className="grid grid-cols-2 gap-3 px-4 mt-3">
-          <Card className="!p-3.5 flex items-center gap-2.5" onClick={() => nav('/admin')}>
-            <span className="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 grid place-items-center"><HeartHandshake className="w-5 h-5" /></span>
-            <div><div className="font-bold text-sm text-slate-800">Quản trị</div><div className="text-[11px] text-slate-400">Chiến dịch, giải ngân, người dùng</div></div>
-          </Card>
-          <Card className="!p-3.5 flex items-center gap-2.5" onClick={() => nav('/inventory')}>
-            <span className="w-9 h-9 rounded-xl bg-brand-100 text-brand-600 grid place-items-center"><PackageCheck className="w-5 h-5" /></span>
-            <div><div className="font-bold text-sm text-slate-800">Kho hiện vật</div><div className="text-[11px] text-slate-400">Quản lý</div></div>
-          </Card>
-        </div>
-      )}
 
       <SectionTitle action={<button onClick={() => nav('/campaigns')} className="text-brand-600 text-sm font-semibold">Tất cả</button>}>
         Chiến dịch nổi bật

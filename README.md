@@ -67,13 +67,15 @@ Mở trình duyệt vào **http://localhost:5173**.
 
 ## 👤 Tài khoản demo
 
-Mật khẩu chung: **`123456`** (hoặc dùng 3 nút "Đăng nhập nhanh" ngay trên màn đăng nhập).
+Mật khẩu chung: **`123456`**.
 
 | Vai trò | Email | Quyền |
 |---------|-------|-------|
 | Nhà hảo tâm | `huong@example.com` | Xem chiến dịch, quyên góp, xem lịch sử |
 | Tình nguyện viên | `khai@example.com` | + Nhận / phân phối hiện vật |
-| Admin | `lan@example.com` | + Giải ngân, duyệt chi phí, xác minh chứng từ |
+| **Quản trị** | `admin@gmail.com` | Quản lý chiến dịch (CRUD), giải ngân, phân quyền người dùng |
+
+> Đăng ký tài khoản mới: chọn vai trò **Nhà hảo tâm** hoặc **Tình nguyện viên**. Quản trị là tài khoản riêng — đăng nhập qua link **"Đăng nhập với tư cách Quản trị"** ở màn đăng nhập.
 
 ---
 

@@ -1,5 +1,5 @@
 import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { Home, LayoutGrid, Heart, Package, ScrollText, CreditCard, User, LayoutDashboard } from 'lucide-react'
+import { Home, LayoutGrid, Heart, Package, ScrollText, User, LayoutDashboard, HandCoins, Users } from 'lucide-react'
 import { useApp } from './store'
 import type { Role } from './data'
 import type { ComponentType } from 'react'
@@ -22,10 +22,10 @@ const navs: Record<Role, NavItem[]> = {
     { icon: User, label: 'Cá nhân', path: '/profile' },
   ],
   admin: [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/home' },
-    { icon: LayoutGrid, label: 'Chiến dịch', path: '/campaigns' },
-    { icon: Package, label: 'Kho', path: '/inventory', fab: true },
-    { icon: CreditCard, label: 'Sổ quỹ', path: '/transactions' },
+    { icon: LayoutDashboard, label: 'Tổng quan', path: '/admin' },
+    { icon: LayoutGrid, label: 'Chiến dịch', path: '/admin/campaigns' },
+    { icon: HandCoins, label: 'Giải ngân', path: '/admin/disbursement' },
+    { icon: Users, label: 'Người dùng', path: '/admin/users' },
     { icon: User, label: 'Cá nhân', path: '/profile' },
   ],
 }
@@ -41,6 +41,10 @@ function BottomNav() {
   const items = navs[role]
   const active = (p: string) => {
     if (p === '/home') return pathname === '/home'
+    if (p === '/admin') return pathname === '/admin'
+    if (p === '/admin/campaigns') return pathname.startsWith('/admin/campaigns')
+    if (p === '/admin/disbursement') return pathname === '/admin/disbursement'
+    if (p === '/admin/users') return pathname === '/admin/users'
     if (p === '/campaigns') return pathname === '/campaigns'
     if (p.startsWith('/campaign/')) return pathname.startsWith('/campaign/') || pathname.startsWith('/donate')
     if (p === '/inventory') return pathname.startsWith('/inventory')
@@ -84,8 +88,9 @@ export default function Shell() {
   const { pathname } = useLocation()
   const hideNav = isNoNav(pathname)
 
-  // Chốt chặn điều hướng theo trạng thái đăng nhập
-  const redirect = !user && pathname !== '/' ? '/' : user && pathname === '/' ? '/home' : null
+  // Chốt chặn điều hướng theo trạng thái đăng nhập (admin vào thẳng khu quản trị)
+  const landing = user?.role === 'admin' ? '/admin' : '/home'
+  const redirect = !user && pathname !== '/' ? '/' : user && pathname === '/' ? landing : null
 
   return (
     <div className="min-h-screen w-full bg-slate-50 flex justify-center">
