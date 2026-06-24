@@ -122,6 +122,17 @@ export const api = {
   receiveInventory: (payload: { name: string; category: string; donorName: string; campaignSlug: string; unit: string; quantity: number }) =>
     request('/inventory', { method: 'POST', body: JSON.stringify(payload) }),
 
+  // ----- TNV: hiện trường -----
+  myField: () => request<TnvField>('/my/field'),
+  distribute: (batchId: number, beneficiaryId: number, quantity: number, note: string) =>
+    request('/distributions', { method: 'POST', body: JSON.stringify({ batchId, beneficiaryId, quantity, note }) }),
+  submitFieldExpense: (campaignSlug: string, title: string, amount: number) =>
+    request('/field-expenses', { method: 'POST', body: JSON.stringify({ campaignSlug, title, amount }) }),
+  myFieldExpenses: () => request<FieldExpense[]>('/my/field-expenses'),
+  beneficiaries: () => request<Beneficiary[]>('/beneficiaries'),
+  createBeneficiary: (name: string, province: string, location: string) =>
+    request('/beneficiaries', { method: 'POST', body: JSON.stringify({ name, province, location }) }),
+
   ledger: () =>
     request<{ kind: string; code: string; who: string; amount: string; label?: string; status: string; at: string | null }[]>('/ledger'),
 
@@ -165,6 +176,18 @@ export interface AdminCampaign {
 }
 export interface AdminUser {
   id: number; fullName: string; email: string; role: string; createdAt: string; donated: number; donationCount: number
+}
+
+export interface TnvField {
+  batchesReceived: number; distributionCount: number; itemsGiven: number
+  expensePending: number; expenseVerified: number
+  recent: { id: number; item: string; qty: number; unit: string; to: string; at: string }[]
+}
+export interface FieldExpense {
+  id: number; title: string; amount: string; status: string; createdAt: string; campaign: { title: string }
+}
+export interface Beneficiary {
+  id: number; name: string; province: string; location: string | null; distributionCount: number
 }
 
 export interface AdminExpense {

@@ -273,6 +273,75 @@ app.post('/api/expenses/:id/reject', requireAuth, requireRole('admin'), async (r
   res.json(e)
 })
 
+// ===== TNV: Phân phối hiện vật (trừ tồn kho thật) =====
+app.post('/api/distributions', requireAuth, requireRole('tnv', 'admin'), async (req, res) => {
+  const { batchId, beneficiaryId, quantity, note } = req.body
+  const qty = Number(quantity)
+  const batch = await db.inkindBatch.findUnique({ where: { id: Number(batchId) } })
+  if (!batch) return res.status(404).json({ error: 'Không tìm thấy lô hiện vật' })
+  if (!(qty > 0) || qty > batch.quantityRemaining) return res.status(400).json({ error: `Số lượng không hợp lệ (tồn ${batch.quantityRemaining})` })
+  const me = currentUser(req)
+  const result = await db.$transaction(async (tx) => {
+    const dist = await tx.distribution.create({ data: { batchId: batch.id, beneficiaryId: Number(beneficiaryId), quantity: qty, note: note ?? '', distributedById: me.id } })
+    const remaining = batch.quantityRemaining - qty
+    await tx.inkindBatch.update({ where: { id: batch.id }, data: { quantityRemaining: remaining, status: remaining <= 0 ? 'given' : 'partial' } })
+    await tx.campaign.update({ where: { id: batch.campaignId }, data: { inkindGiven: { increment: qty } } })
+    await tx.mediaAsset.create({ data: { url: `/uploads/distribution-${dist.id}.jpg`, kind: 'distribution_photo', ownerType: 'campaign', ownerId: batch.campaignId, uploadedById: me.id } })
+    await tx.auditLog.create({ data: { actorId: me.id, action: 'create', entityType: 'Distribution', entityId: dist.id, reason: `Trao ${qty} ${batch.unit} ${batch.name}` } })
+    return dist
+  })
+  res.json(result)
+})
+
+// ===== TNV: Chi phí thực địa (gửi admin duyệt) =====
+app.post('/api/field-expenses', requireAuth, requireRole('tnv', 'admin'), async (req, res) => {
+  const { campaignSlug, title, amount } = req.body
+  if (!title?.trim() || !amount) return res.status(400).json({ error: 'Thiếu nội dung hoặc số tiền' })
+  const campaign = await db.campaign.findUnique({ where: { slug: campaignSlug } })
+  if (!campaign) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
+  const e = await db.expense.create({ data: { campaignId: campaign.id, title: title.trim(), amount: BigInt(amount), type: 'field_expense', status: 'pending', submittedById: currentUser(req).id } })
+  res.json(e)
+})
+
+app.get('/api/my/field-expenses', requireAuth, requireRole('tnv', 'admin'), async (req, res) => {
+  const list = await db.expense.findMany({
+    where: { submittedById: currentUser(req).id, type: 'field_expense' },
+    orderBy: { createdAt: 'desc' }, include: { campaign: { select: { title: true } } },
+  })
+  res.json(list)
+})
+
+// ===== Điểm trường (beneficiaries) =====
+app.get('/api/beneficiaries', requireAuth, async (_req, res) => {
+  const list = await db.beneficiary.findMany({ orderBy: { createdAt: 'asc' }, include: { _count: { select: { distributions: true } } } })
+  res.json(list.map((b) => ({ id: b.id, name: b.name, province: b.province, location: b.location, distributionCount: b._count.distributions })))
+})
+app.post('/api/beneficiaries', requireAuth, requireRole('tnv', 'admin'), async (req, res) => {
+  const { name, province, location } = req.body
+  if (!name?.trim()) return res.status(400).json({ error: 'Thiếu tên điểm trường' })
+  const b = await db.beneficiary.create({ data: { name: name.trim(), province: province ?? '', location: location ?? '' } })
+  res.json(b)
+})
+
+// ===== TNV: Tổng quan hiện trường =====
+app.get('/api/my/field', requireAuth, requireRole('tnv', 'admin'), async (req, res) => {
+  const uid = currentUser(req).id
+  const [batchesReceived, distributions, expenses, recent] = await Promise.all([
+    db.inkindBatch.count({ where: { receivedById: uid } }),
+    db.distribution.findMany({ where: { distributedById: uid } }),
+    db.expense.findMany({ where: { submittedById: uid, type: 'field_expense' } }),
+    db.distribution.findMany({ where: { distributedById: uid }, orderBy: { distributedAt: 'desc' }, take: 5, include: { batch: { select: { name: true, unit: true } }, beneficiary: { select: { name: true } } } }),
+  ])
+  res.json({
+    batchesReceived,
+    distributionCount: distributions.length,
+    itemsGiven: distributions.reduce((s, d) => s + d.quantity, 0),
+    expensePending: expenses.filter((e) => e.status === 'pending').length,
+    expenseVerified: expenses.filter((e) => e.status === 'verified').reduce((s, e) => s + Number(e.amount), 0),
+    recent: recent.map((d) => ({ id: d.id, item: d.batch.name, qty: d.quantity, unit: d.batch.unit, to: d.beneficiary.name, at: d.distributedAt })),
+  })
+})
+
 // ===== Admin: Quản lý chiến dịch (CRUD) =====
 const slugify = (s: string) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')

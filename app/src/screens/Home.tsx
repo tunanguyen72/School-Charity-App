@@ -5,8 +5,14 @@ import { api } from '../api'
 import { useFetch } from '../useFetch'
 import { vnd, vndShort, pct } from '../format'
 import { Avatar, Badge, Button, Card, Progress, SectionTitle, Loading, ErrorBox } from '../ui'
+import TnvHome from './tnv/TnvHome'
 
 export default function Home() {
+  const { role } = useApp()
+  return role === 'tnv' ? <TnvHome /> : <DonorHome />
+}
+
+function DonorHome() {
   const nav = useNavigate()
   const { user } = useApp()
 

@@ -1,5 +1,5 @@
 import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { Home, LayoutGrid, Heart, Package, ScrollText, User, LayoutDashboard, HandCoins, Users } from 'lucide-react'
+import { Home, LayoutGrid, Heart, Package, ScrollText, User, LayoutDashboard, HandCoins, Users, PackagePlus, Receipt } from 'lucide-react'
 import { useApp } from './store'
 import type { Role } from './data'
 import type { ComponentType } from 'react'
@@ -16,9 +16,9 @@ const navs: Record<Role, NavItem[]> = {
   ],
   tnv: [
     { icon: Home, label: 'Trang chủ', path: '/home' },
-    { icon: LayoutGrid, label: 'Chiến dịch', path: '/campaigns' },
-    { icon: Package, label: 'Kho', path: '/inventory', fab: true },
-    { icon: ScrollText, label: 'Giao dịch', path: '/transactions' },
+    { icon: Package, label: 'Kho', path: '/inventory' },
+    { icon: PackagePlus, label: 'Nhận', path: '/inventory/receive', fab: true },
+    { icon: Receipt, label: 'Chi phí', path: '/field-expense' },
     { icon: User, label: 'Cá nhân', path: '/profile' },
   ],
   admin: [
