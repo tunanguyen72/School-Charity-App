@@ -14,7 +14,7 @@ process.on('uncaughtException', (err) => console.error('[uncaughtException]', er
 
 const app = express()
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '8mb' })) // cho phép body lớn vì ảnh gửi dạng data URL
 
 const genTxn = () => 'CE-' + Math.floor(1_000_000 + Math.random() * 9_000_000)
 const currentUser = (req: Request) => (req as Request & { user: AuthUser }).user
@@ -224,7 +224,7 @@ app.post('/api/inventory', requireAuth, requireRole('tnv', 'admin'), async (req,
   const { name, category, donorName, campaignSlug, unit, quantity, condition, photo } = req.body
   const campaign = await db.campaign.findUnique({ where: { slug: campaignSlug } })
   if (!campaign) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
-  const photoUrl = typeof photo === 'string' && photo.startsWith('data:image') && photo.length < 2_500_000 ? photo : null
+  const photoUrl = typeof photo === 'string' && photo.startsWith('data:image') && photo.length < 6_000_000 ? photo : null
   const batch = await db.inkindBatch.create({
     data: {
       name, category, donorName, campaignId: campaign.id, unit,
@@ -261,7 +261,7 @@ app.post('/api/expenses/:id/verify', requireAuth, requireRole('admin'), async (r
   const exp = await db.expense.findUnique({ where: { id } })
   if (!exp) return res.status(404).json({ error: 'Không tìm thấy khoản chi' })
   const { photo } = req.body
-  const receiptUrl = typeof photo === 'string' && photo.startsWith('data:image') && photo.length < 2_500_000 ? photo : null
+  const receiptUrl = typeof photo === 'string' && photo.startsWith('data:image') && photo.length < 6_000_000 ? photo : null
   if (!receiptUrl) return res.status(400).json({ error: 'Cần đính kèm ảnh chứng từ để xác minh' })
   const me = currentUser(req)
   const updated = await db.$transaction(async (tx) => {
@@ -289,7 +289,7 @@ app.post('/api/distributions', requireAuth, requireRole('tnv', 'admin'), async (
   if (!batch) return res.status(404).json({ error: 'Không tìm thấy lô hiện vật' })
   if (!(qty > 0) || qty > batch.quantityRemaining) return res.status(400).json({ error: `Số lượng không hợp lệ (tồn ${batch.quantityRemaining})` })
   // ảnh là data URL đã nén ở client; giới hạn ~2MB cho an toàn
-  const photoUrl = typeof photo === 'string' && photo.startsWith('data:image') && photo.length < 2_500_000 ? photo : null
+  const photoUrl = typeof photo === 'string' && photo.startsWith('data:image') && photo.length < 6_000_000 ? photo : null
   const me = currentUser(req)
   const result = await db.$transaction(async (tx) => {
     const dist = await tx.distribution.create({ data: { batchId: batch.id, beneficiaryId: Number(beneficiaryId), quantity: qty, note: note ?? '', photoUrl, distributedById: me.id } })

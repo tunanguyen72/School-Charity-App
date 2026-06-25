@@ -1,5 +1,5 @@
 // Nén & thu nhỏ ảnh ở client trước khi gửi -> data URL JPEG gọn nhẹ (~vài chục KB)
-export function compressImage(file: File, maxDim = 1000, quality = 0.7): Promise<string> {
+export function compressImage(file: File, maxDim = 900, quality = 0.6): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onerror = () => reject(new Error('Không đọc được ảnh'))

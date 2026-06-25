@@ -1,5 +1,5 @@
 // Service worker tối giản — đủ để cài PWA + chạy offline phần vỏ app
-const CACHE = 'cedt-v6'
+const CACHE = 'cedt-v7'
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg']
 
 self.addEventListener('install', (e) => {
