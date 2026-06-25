@@ -46,7 +46,10 @@ export default function Inventory() {
           return (
             <Card key={b.id} className={b.status === 'given' ? 'opacity-80' : ''}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 font-bold text-slate-800"><span className="text-xl">{emojiFor(b.category)}</span> {b.name}</div>
+                <div className="flex items-center gap-2 font-bold text-slate-800">
+                  {b.photoUrl ? <img src={b.photoUrl} alt="" className="w-8 h-8 rounded-lg object-cover" /> : <span className="text-xl">{emojiFor(b.category)}</span>}
+                  {b.name}
+                </div>
                 <Badge tone={sm.tone}>{sm.label}</Badge>
               </div>
               <div className="text-xs text-slate-400 mt-1.5">Người tặng: {b.donorName}</div>

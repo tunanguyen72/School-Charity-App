@@ -55,7 +55,7 @@ interface ApiCampaign {
   endDate: string | null; bannerEmoji: string | null; isVerified: boolean
   milestones?: { label: string; dateLabel: string; description: string | null; state: string }[]
   donations?: { amount: string; isAnonymous: boolean; confirmedAt: string | null; donor: { fullName: string } }[]
-  expenses?: { title: string; amount: string }[]
+  expenses?: { title: string; amount: string; receiptUrl: string | null }[]
   photos?: (string | null)[]
 }
 
@@ -82,7 +82,7 @@ export interface UICampaign {
   gradient: string; emoji: string; verified: boolean; inkindReceived: number; inkindGiven: number
   roadmap: { label: string; date: string; desc: string; state: string }[]
   topDonors: { name: string; amount: number; when: string; anon: boolean }[]
-  costs: { label: string; amount: number; icon: string }[]
+  costs: { label: string; amount: number; icon: string; receipt: string | null }[]
   photos: string[]
 }
 
@@ -97,7 +97,7 @@ function adaptCampaign(c: ApiCampaign): UICampaign {
       name: d.donor.fullName, amount: Number(d.amount), anon: d.isAnonymous,
       when: d.confirmedAt ? new Date(d.confirmedAt).toLocaleDateString('vi-VN') : 'gần đây',
     })),
-    costs: (c.expenses ?? []).map((e) => ({ label: e.title, amount: Number(e.amount), icon: costIcon(e.title) })),
+    costs: (c.expenses ?? []).map((e) => ({ label: e.title, amount: Number(e.amount), icon: costIcon(e.title), receipt: e.receiptUrl })),
     photos: (c.photos ?? []).filter((p): p is string => !!p),
   }
 }
@@ -121,8 +121,8 @@ export const api = {
     request<{ txnCode: string; status: string }>(`/donations/${txnCode}/confirm`, { method: 'POST' }),
 
   inventory: () =>
-    request<{ id: number; name: string; category: string; donorName: string; unit: string; quantityTotal: number; quantityRemaining: number; status: string }[]>('/inventory'),
-  receiveInventory: (payload: { name: string; category: string; donorName: string; campaignSlug: string; unit: string; quantity: number }) =>
+    request<{ id: number; name: string; category: string; donorName: string; unit: string; quantityTotal: number; quantityRemaining: number; status: string; photoUrl: string | null }[]>('/inventory'),
+  receiveInventory: (payload: { name: string; category: string; donorName: string; campaignSlug: string; unit: string; quantity: number; photo?: string }) =>
     request('/inventory', { method: 'POST', body: JSON.stringify(payload) }),
 
   // ----- TNV: hiện trường -----
@@ -152,8 +152,8 @@ export const api = {
     request<AdminExpense[]>('/expenses'),
   createExpense: (campaignSlug: string, title: string, amount: number, type: string) =>
     request<{ id: number }>('/expenses', { method: 'POST', body: JSON.stringify({ campaignSlug, title, amount, type }) }),
-  verifyExpense: (id: number) =>
-    request(`/expenses/${id}/verify`, { method: 'POST' }),
+  verifyExpense: (id: number, photo: string) =>
+    request(`/expenses/${id}/verify`, { method: 'POST', body: JSON.stringify({ photo }) }),
   rejectExpense: (id: number) =>
     request(`/expenses/${id}/reject`, { method: 'POST' }),
 
@@ -200,7 +200,7 @@ export interface DistributionRow {
 }
 
 export interface AdminExpense {
-  id: number; title: string; amount: string; type: string; status: string; createdAt: string
+  id: number; title: string; amount: string; type: string; status: string; createdAt: string; receiptUrl: string | null
   campaign: { title: string }; submittedBy: { fullName: string }
 }
 

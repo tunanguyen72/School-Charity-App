@@ -221,14 +221,15 @@ app.get('/api/ledger', async (_req, res) => {
 
 // --- TNV/Admin: nhận hiện vật vào kho ---
 app.post('/api/inventory', requireAuth, requireRole('tnv', 'admin'), async (req, res) => {
-  const { name, category, donorName, campaignSlug, unit, quantity, condition } = req.body
+  const { name, category, donorName, campaignSlug, unit, quantity, condition, photo } = req.body
   const campaign = await db.campaign.findUnique({ where: { slug: campaignSlug } })
   if (!campaign) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
+  const photoUrl = typeof photo === 'string' && photo.startsWith('data:image') && photo.length < 2_500_000 ? photo : null
   const batch = await db.inkindBatch.create({
     data: {
       name, category, donorName, campaignId: campaign.id, unit,
       quantityTotal: Number(quantity), quantityRemaining: Number(quantity),
-      condition: condition ?? 'new', status: 'stored', receivedById: currentUser(req).id,
+      condition: condition ?? 'new', status: 'stored', photoUrl, receivedById: currentUser(req).id,
     },
   })
   res.json(batch)
@@ -259,10 +260,12 @@ app.post('/api/expenses/:id/verify', requireAuth, requireRole('admin'), async (r
   const id = Number(req.params.id)
   const exp = await db.expense.findUnique({ where: { id } })
   if (!exp) return res.status(404).json({ error: 'Không tìm thấy khoản chi' })
+  const { photo } = req.body
+  const receiptUrl = typeof photo === 'string' && photo.startsWith('data:image') && photo.length < 2_500_000 ? photo : null
+  if (!receiptUrl) return res.status(400).json({ error: 'Cần đính kèm ảnh chứng từ để xác minh' })
   const me = currentUser(req)
   const updated = await db.$transaction(async (tx) => {
-    await tx.mediaAsset.create({ data: { url: `/uploads/receipt-exp${id}.jpg`, kind: 'receipt', ownerType: 'expense', ownerId: id, uploadedById: me.id } })
-    const e = await tx.expense.update({ where: { id }, data: { status: 'verified', approvedById: me.id, approvedAt: new Date() } })
+    const e = await tx.expense.update({ where: { id }, data: { status: 'verified', receiptUrl, approvedById: me.id, approvedAt: new Date() } })
     await tx.auditLog.create({ data: { actorId: me.id, action: 'verify', entityType: 'Expense', entityId: id, reason: 'Đính kèm chứng từ & xác minh' } })
     return e
   })

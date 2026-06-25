@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Loader2 } from 'lucide-react'
+import { Camera, Loader2, X } from 'lucide-react'
 import { api } from '../api'
+import { compressImage } from '../img'
 import { Button, Field, TopBar, inputCls } from '../ui'
 
 export default function Receive() {
@@ -12,13 +13,24 @@ export default function Receive() {
   const [unit, setUnit] = useState('bộ')
   const [donorName, setDonorName] = useState('Công ty TechCloud')
   const [campaignSlug, setCampaignSlug] = useState('ban-mo')
+  const [photo, setPhoto] = useState('')
+  const [photoBusy, setPhotoBusy] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const onPick = async (file?: File) => {
+    if (!file) return
+    setPhotoBusy(true); setErr('')
+    try { setPhoto(await compressImage(file)) }
+    catch (e) { setErr((e as Error).message) }
+    finally { setPhotoBusy(false) }
+  }
 
   const save = async () => {
     setBusy(true); setErr('')
     try {
-      await api.receiveInventory({ name, category, donorName, campaignSlug, unit, quantity: Number(quantity) })
+      await api.receiveInventory({ name, category, donorName, campaignSlug, unit, quantity: Number(quantity), photo: photo || undefined })
       nav('/inventory')
     } catch (e) { setErr((e as Error).message) }
     finally { setBusy(false) }
@@ -45,9 +57,17 @@ export default function Receive() {
           </select>
         </Field>
         <Field label="Ảnh hiện vật">
-          <div className="h-28 rounded-2xl border-2 border-dashed border-slate-300 grid place-items-center text-slate-400 bg-white">
-            <div className="text-center"><Camera className="w-7 h-7 mx-auto" /><span className="text-xs">Chụp / tải ảnh</span></div>
-          </div>
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => onPick(e.target.files?.[0])} />
+          {photo ? (
+            <div className="relative">
+              <img src={photo} alt="Ảnh hiện vật" className="w-full h-44 object-cover rounded-2xl" />
+              <button onClick={() => { setPhoto(''); if (fileRef.current) fileRef.current.value = '' }} className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/55 text-white grid place-items-center"><X className="w-4 h-4" /></button>
+            </div>
+          ) : (
+            <button onClick={() => fileRef.current?.click()} className="w-full h-28 rounded-2xl border-2 border-dashed border-slate-300 grid place-items-center text-slate-400 bg-white active:bg-slate-50">
+              {photoBusy ? <Loader2 className="w-7 h-7 animate-spin-slow" /> : <div className="text-center"><Camera className="w-7 h-7 mx-auto" /><span className="text-xs">Chụp / chọn ảnh hiện vật</span></div>}
+            </button>
+          )}
         </Field>
         {err && <div className="text-rose-600 text-[13px] text-center px-5">{err}</div>}
         <div className="px-5 py-5"><Button onClick={save} disabled={busy}>{busy ? <Loader2 className="w-5 h-5 animate-spin-slow" /> : 'Lưu vào kho'}</Button></div>

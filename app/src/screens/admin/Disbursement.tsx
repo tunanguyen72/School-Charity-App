@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShieldCheck, BadgeCheck, XCircle, Clock, Loader2, Plus } from 'lucide-react'
+import { ShieldCheck, BadgeCheck, XCircle, Clock, Loader2, Plus, Camera } from 'lucide-react'
 import { api, type AdminExpense, type UICampaign } from '../../api'
+import { compressImage } from '../../img'
 import { vnd, vndShort } from '../../format'
 import { Button, Card, Badge, TopBar, Field, Loading, inputCls } from '../../ui'
 
@@ -36,10 +37,22 @@ export default function Disbursement() {
     } catch (e) { setErr((e as Error).message) }
     finally { setCreating(false) }
   }
-  const act = async (id: number, kind: 'verify' | 'reject') => {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const verifyIdRef = useRef<number | null>(null)
+
+  const reject = async (id: number) => {
     setBusyId(id)
-    try { await (kind === 'verify' ? api.verifyExpense(id) : api.rejectExpense(id)); await load() }
+    try { await api.rejectExpense(id); await load() }
     finally { setBusyId(null) }
+  }
+  const startVerify = (id: number) => { verifyIdRef.current = id; fileRef.current?.click() }
+  const onReceipt = async (file?: File) => {
+    const id = verifyIdRef.current
+    if (!file || !id) return
+    setBusyId(id); setErr('')
+    try { const photo = await compressImage(file); await api.verifyExpense(id, photo); await load() }
+    catch (e) { setErr((e as Error).message) }
+    finally { setBusyId(null); verifyIdRef.current = null; if (fileRef.current) fileRef.current.value = '' }
   }
 
   const pending = expenses?.filter((e) => e.status === 'pending') ?? []
@@ -49,6 +62,7 @@ export default function Disbursement() {
   return (
     <div className="min-h-[100svh] bg-slate-50 pb-4">
       <TopBar title="Giải ngân & chi phí" back="/admin" right={<ShieldCheck className="w-5 h-5 text-emerald-500" />} />
+      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(ev) => onReceipt(ev.target.files?.[0])} />
 
       <div className="grid grid-cols-3 gap-2 px-4 pt-4">
         {[[`${pending.length}`, 'CHỜ DUYỆT', 'text-amber-600'], [vndShort(totalVerified), 'ĐÃ GIẢI NGÂN', 'text-emerald-600'], [`${expenses?.length ?? 0}`, 'TỔNG KHOẢN', 'text-brand-700']].map(([a, b, c]) => (
@@ -85,11 +99,12 @@ export default function Disbursement() {
             <div className="flex items-center gap-2 mt-3">
               <Badge tone="amber"><Clock className="w-3 h-3" /> Chờ chứng từ</Badge>
               <div className="flex-1" />
-              <button onClick={() => act(e.id, 'reject')} disabled={busyId === e.id} className="px-3 py-1.5 rounded-lg text-[13px] font-bold text-rose-600 bg-rose-50 active:bg-rose-100">Từ chối</button>
-              <button onClick={() => act(e.id, 'verify')} disabled={busyId === e.id} className="px-3 py-1.5 rounded-lg text-[13px] font-bold text-white bg-emerald-600 active:scale-95 flex items-center gap-1">
-                {busyId === e.id ? <Loader2 className="w-3.5 h-3.5 animate-spin-slow" /> : <BadgeCheck className="w-3.5 h-3.5" />} Xác minh
+              <button onClick={() => reject(e.id)} disabled={busyId === e.id} className="px-3 py-1.5 rounded-lg text-[13px] font-bold text-rose-600 bg-rose-50 active:bg-rose-100">Từ chối</button>
+              <button onClick={() => startVerify(e.id)} disabled={busyId === e.id} className="px-3 py-1.5 rounded-lg text-[13px] font-bold text-white bg-emerald-600 active:scale-95 flex items-center gap-1">
+                {busyId === e.id ? <Loader2 className="w-3.5 h-3.5 animate-spin-slow" /> : <Camera className="w-3.5 h-3.5" />} Xác minh
               </button>
             </div>
+            <div className="text-[11px] text-slate-400 mt-2">📎 Bấm “Xác minh” để chụp/chọn ảnh chứng từ đính kèm.</div>
           </Card>
         ))}
       </div>
@@ -100,9 +115,13 @@ export default function Disbursement() {
           <div className="px-4 space-y-2">
             {resolved.map((e) => (
               <Card key={e.id} className="!p-3 flex items-center gap-3 opacity-90">
-                <span className={`w-9 h-9 rounded-xl grid place-items-center ${e.status === 'verified' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
-                  {e.status === 'verified' ? <BadgeCheck className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                </span>
+                {e.status === 'verified' && e.receiptUrl ? (
+                  <img src={e.receiptUrl} alt="Chứng từ" className="w-9 h-9 rounded-xl object-cover" />
+                ) : (
+                  <span className={`w-9 h-9 rounded-xl grid place-items-center ${e.status === 'verified' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                    {e.status === 'verified' ? <BadgeCheck className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                  </span>
+                )}
                 <div className="flex-1 min-w-0"><b className="text-slate-800 text-sm">{e.title}</b><div className="text-xs text-slate-400 truncate">{e.campaign.title}</div></div>
                 <div className="text-right">
                   <b className="text-rose-600 text-[13px]">-{vnd(Number(e.amount))}</b>

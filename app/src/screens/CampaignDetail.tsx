@@ -103,9 +103,13 @@ export default function CampaignDetail() {
             {c.costs.length === 0 && <p className="text-slate-400 text-sm text-center py-6">Chưa phát sinh chi phí.</p>}
             {c.costs.map((x, i) => (
               <div key={i} className="flex items-center gap-3 bg-white rounded-2xl p-3">
-                <span className="w-9 h-9 rounded-xl bg-rose-100 grid place-items-center text-lg">{x.icon}</span>
-                <div className="flex-1 text-sm"><b>{x.label}</b><div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1"><BadgeCheck className="w-3.5 h-3.5" /> Đã xác minh · có chứng từ</div></div>
-                <b className="text-rose-600">-{vndShort(x.amount)}</b>
+                {x.receipt ? (
+                  <img src={x.receipt} alt="Chứng từ" className="w-10 h-10 rounded-xl object-cover shrink-0" />
+                ) : (
+                  <span className="w-10 h-10 rounded-xl bg-rose-100 grid place-items-center text-lg shrink-0">{x.icon}</span>
+                )}
+                <div className="flex-1 text-sm min-w-0"><b className="truncate block">{x.label}</b><div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1"><BadgeCheck className="w-3.5 h-3.5" /> Đã xác minh{x.receipt ? ' · có ảnh chứng từ' : ''}</div></div>
+                <b className="text-rose-600 shrink-0">-{vndShort(x.amount)}</b>
               </div>
             ))}
           </div>

@@ -110,6 +110,7 @@ model InkindBatch {
   quantityRemaining Int
   condition         String         @default("new") // 'new' | 'used_good'
   estimatedValue    BigInt?
+  photoUrl          String? // ảnh hiện vật khi nhận (data URL đã nén)
   status            String         @default("stored") // 'stored' | 'partial' | 'given'
   receivedById      Int
   receivedBy        User           @relation("InkindReceivedBy", fields: [receivedById], references: [id])
@@ -139,6 +140,7 @@ model Expense {
   amount       BigInt
   type         String // 'disbursement' | 'field_expense'
   status       String    @default("pending") // 'pending' | 'verified' | 'rejected' | 'voided'
+  receiptUrl   String? // ảnh chứng từ khi xác minh (data URL đã nén)
   submittedById Int
   submittedBy  User      @relation("ExpenseSubmittedBy", fields: [submittedById], references: [id])
   approvedById Int?
