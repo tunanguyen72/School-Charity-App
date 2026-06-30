@@ -1,10 +1,22 @@
 import type { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import crypto from 'node:crypto'
 
-// Đồ án: có secret mặc định để chạy ngay. Production BẮT BUỘC đặt JWT_SECRET trong môi trường.
-const JWT_SECRET = process.env.JWT_SECRET ?? 'cung-em-den-truong-dev-secret'
-if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET)
-  throw new Error('JWT_SECRET chưa được đặt — bắt buộc ở môi trường production')
+// Khoá ký JWT:
+// - Dev: dùng secret mặc định để chạy ngay.
+// - Production có JWT_SECRET: dùng giá trị đó (NÊN làm — token sống qua các lần restart).
+// - Production thiếu JWT_SECRET: tự sinh secret ngẫu nhiên mạnh + cảnh báo (không sập app),
+//   nhưng người dùng sẽ bị đăng xuất mỗi khi server khởi động lại.
+function resolveSecret(): string {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('[auth] ⚠️ JWT_SECRET chưa được đặt. Đang dùng secret ngẫu nhiên tạm thời — ' +
+      'người dùng sẽ bị đăng xuất mỗi khi server khởi động lại. Hãy đặt JWT_SECRET trong biến môi trường.')
+    return crypto.randomBytes(32).toString('hex')
+  }
+  return 'cung-em-den-truong-dev-secret'
+}
+const JWT_SECRET = resolveSecret()
 const TOKEN_TTL = '7d'
 
 export interface AuthUser {
