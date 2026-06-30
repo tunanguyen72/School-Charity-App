@@ -1,8 +1,10 @@
 import type { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 
-// Đồ án: secret để cứng. Production nên đặt trong biến môi trường.
+// Đồ án: có secret mặc định để chạy ngay. Production BẮT BUỘC đặt JWT_SECRET trong môi trường.
 const JWT_SECRET = process.env.JWT_SECRET ?? 'cung-em-den-truong-dev-secret'
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET)
+  throw new Error('JWT_SECRET chưa được đặt — bắt buộc ở môi trường production')
 const TOKEN_TTL = '7d'
 
 export interface AuthUser {

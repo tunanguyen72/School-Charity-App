@@ -13,6 +13,7 @@ server/prisma/*.db-journal
 # Env & secrets
 .env
 .env.*
+!.env.example
 *.local
 
 # Logs

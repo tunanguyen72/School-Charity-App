@@ -13,29 +13,45 @@ process.on('unhandledRejection', (reason) => console.error('[unhandledRejection]
 process.on('uncaughtException', (err) => console.error('[uncaughtException]', err))
 
 const app = express()
-app.use(cors())
+// CORS: mặc định mở (tiện cho dev/đồ án). Đặt CORS_ORIGIN (phân tách bằng dấu phẩy) để giới hạn khi deploy.
+const corsOrigins = process.env.CORS_ORIGIN?.split(',').map((s) => s.trim()).filter(Boolean)
+app.use(cors(corsOrigins?.length ? { origin: corsOrigins } : undefined))
 app.use(express.json({ limit: '8mb' })) // cho phép body lớn vì ảnh gửi dạng data URL
 
 const genTxn = () => 'CE-' + Math.floor(1_000_000 + Math.random() * 9_000_000)
 const currentUser = (req: Request) => (req as Request & { user: AuthUser }).user
 
+// Chuẩn hoá email (chống tạo trùng do khác hoa/thường) + kiểm tra định dạng cơ bản
+const normalizeEmail = (e: unknown) => (typeof e === 'string' ? e.trim().toLowerCase() : '')
+const isEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
+// Số tiền hợp lệ: nguyên dương, không NaN/âm/0 — trả null nếu sai
+const parseAmount = (v: unknown): bigint | null => {
+  const n = typeof v === 'number' ? v : Number(v)
+  if (!Number.isFinite(n) || !Number.isInteger(n) || n <= 0) return null
+  return BigInt(n)
+}
+
 // ===== Xác thực =====
 app.post('/api/auth/register', async (req, res) => {
-  const { fullName, email, password, role } = req.body
-  if (!fullName || !email || !password) return res.status(400).json({ error: 'Thiếu thông tin' })
+  const { fullName, password, role } = req.body
+  const email = normalizeEmail(req.body.email)
+  if (!fullName?.trim() || !email || !password) return res.status(400).json({ error: 'Thiếu thông tin' })
+  if (!isEmail(email)) return res.status(400).json({ error: 'Email không hợp lệ' })
+  if (String(password).length < 6) return res.status(400).json({ error: 'Mật khẩu phải có ít nhất 6 ký tự' })
   // Chỉ cho tự đăng ký donor hoặc tnv — KHÔNG cho tự tạo admin
   const safeRole = role === 'tnv' ? 'tnv' : 'donor'
   const existing = await db.user.findUnique({ where: { email } })
   if (existing) return res.status(409).json({ error: 'Email đã được đăng ký' })
   const user = await db.user.create({
-    data: { fullName, email, passwordHash: bcrypt.hashSync(password, 10), role: safeRole },
+    data: { fullName: fullName.trim(), email, passwordHash: bcrypt.hashSync(password, 10), role: safeRole },
   })
   const auth: AuthUser = { id: user.id, email: user.email, role: user.role, fullName: user.fullName }
   res.json({ token: signToken(auth), user: auth })
 })
 
 app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body
+  const { password } = req.body
+  const email = normalizeEmail(req.body.email)
   const user = await db.user.findUnique({ where: { email } })
   if (!user || !user.passwordHash || !bcrypt.compareSync(password, user.passwordHash))
     return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng' })
@@ -98,15 +114,21 @@ app.get('/api/stats', requireAuth, async (_req, res) => {
   const inkindTotal = inkind._sum.quantityTotal ?? 0
   const inkindRemaining = inkind._sum.quantityRemaining ?? 0
 
-  // Biểu đồ theo tháng (2024, T1..T6)
-  const monthly = Array.from({ length: 6 }, (_, i) => ({ label: `T${i + 1}`, total: 0, count: 0 }))
+  // Biểu đồ 6 tháng gần nhất — neo vào giao dịch thành công mới nhất
+  // (giữ đúng dữ liệu seed lẫn tự cập nhật khi có quyên góp mới, không cứng theo năm)
+  const times = successDonations.map((d) => d.confirmedAt).filter((t): t is Date => !!t).map((t) => new Date(t).getTime())
+  const anchor = times.length ? new Date(Math.max(...times)) : new Date()
+  const monthKey = (y: number, m: number) => y * 12 + m // m: 0-11
+  const anchorKey = monthKey(anchor.getFullYear(), anchor.getMonth())
+  const monthly = Array.from({ length: 6 }, (_, i) => {
+    const k = anchorKey - (5 - i)
+    return { label: `T${(((k % 12) + 12) % 12) + 1}`, total: 0, count: 0 }
+  })
   for (const d of successDonations) {
     if (!d.confirmedAt) continue
     const dt = new Date(d.confirmedAt)
-    if (dt.getFullYear() === 2024) {
-      const m = dt.getMonth()
-      if (m < 6) { monthly[m].total += n(d.amount); monthly[m].count++ }
-    }
+    const idx = 5 - (anchorKey - monthKey(dt.getFullYear(), dt.getMonth()))
+    if (idx >= 0 && idx < 6) { monthly[idx].total += n(d.amount); monthly[idx].count++ }
   }
 
   // Top nhà hảo tâm
@@ -168,28 +190,39 @@ app.get('/api/campaigns/:slug', async (req, res) => {
 // --- Quyên góp: tạo (pending) → trả QR/mã giao dịch ---
 app.post('/api/donations', requireAuth, async (req, res) => {
   const { campaignSlug, amount, message, isAnonymous } = req.body
+  const amt = parseAmount(amount)
+  if (!amt) return res.status(400).json({ error: 'Số tiền quyên góp không hợp lệ' })
   const campaign = await db.campaign.findUnique({ where: { slug: campaignSlug } })
   if (!campaign) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
   const donation = await db.donation.create({
     data: {
       txnCode: genTxn(), campaignId: campaign.id, donorId: currentUser(req).id,
-      amount: BigInt(amount), message, isAnonymous: !!isAnonymous, status: 'pending',
+      amount: amt, message, isAnonymous: !!isAnonymous, status: 'pending',
     },
   })
   res.json(donation)
 })
 
 // --- Xác nhận thanh toán (trang QR giả lập gọi về) ---
-app.post('/api/donations/:txnCode/confirm', async (req, res) => {
+app.post('/api/donations/:txnCode/confirm', requireAuth, async (req, res) => {
   const donation = await db.donation.findUnique({ where: { txnCode: req.params.txnCode } })
   if (!donation) return res.status(404).json({ error: 'Không tìm thấy giao dịch' })
+  // Chỉ chủ giao dịch (hoặc admin) mới được xác nhận — tránh người khác đoán mã để bơm quỹ
+  const me = currentUser(req)
+  if (donation.donorId !== me.id && me.role !== 'admin')
+    return res.status(403).json({ error: 'Không đủ quyền xác nhận giao dịch này' })
   if (donation.status === 'success') return res.json(donation)
 
   const updated = await db.$transaction(async (tx) => {
     const d = await tx.donation.update({ where: { id: donation.id }, data: { status: 'success', confirmedAt: new Date() } })
+    // donorCount = số nhà hảo tâm DUY NHẤT đã quyên góp thành công (không cộng dồn mỗi lượt)
+    const distinctDonors = await tx.donation.findMany({
+      where: { campaignId: donation.campaignId, status: 'success' },
+      distinct: ['donorId'], select: { donorId: true },
+    })
     await tx.campaign.update({
       where: { id: donation.campaignId },
-      data: { raisedAmount: { increment: donation.amount }, donorCount: { increment: 1 } },
+      data: { raisedAmount: { increment: donation.amount }, donorCount: distinctDonors.length },
     })
     await tx.notification.create({
       data: { userId: donation.donorId, type: 'donation_success', title: 'Quyên góp thành công', body: `Cảm ơn bạn đã đóng góp ${donation.amount.toString()}đ.` },
@@ -238,10 +271,13 @@ app.post('/api/inventory', requireAuth, requireRole('tnv', 'admin'), async (req,
 // --- Admin: tạo khoản giải ngân (chờ chứng từ để xác minh) ---
 app.post('/api/expenses', requireAuth, requireRole('admin'), async (req, res) => {
   const { campaignSlug, title, amount, type } = req.body
+  const amt = parseAmount(amount)
+  if (!title?.trim()) return res.status(400).json({ error: 'Thiếu nội dung khoản chi' })
+  if (!amt) return res.status(400).json({ error: 'Số tiền không hợp lệ' })
   const campaign = await db.campaign.findUnique({ where: { slug: campaignSlug } })
   if (!campaign) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
   const expense = await db.expense.create({
-    data: { campaignId: campaign.id, title, amount: BigInt(amount), type: type ?? 'disbursement', status: 'pending', submittedById: currentUser(req).id },
+    data: { campaignId: campaign.id, title: title.trim(), amount: amt, type: type ?? 'disbursement', status: 'pending', submittedById: currentUser(req).id },
   })
   res.json(expense)
 })
@@ -287,7 +323,9 @@ app.post('/api/distributions', requireAuth, requireRole('tnv', 'admin'), async (
   const qty = Number(quantity)
   const batch = await db.inkindBatch.findUnique({ where: { id: Number(batchId) } })
   if (!batch) return res.status(404).json({ error: 'Không tìm thấy lô hiện vật' })
-  if (!(qty > 0) || qty > batch.quantityRemaining) return res.status(400).json({ error: `Số lượng không hợp lệ (tồn ${batch.quantityRemaining})` })
+  const beneficiary = await db.beneficiary.findUnique({ where: { id: Number(beneficiaryId) } })
+  if (!beneficiary) return res.status(404).json({ error: 'Không tìm thấy điểm trường' })
+  if (!Number.isInteger(qty) || !(qty > 0) || qty > batch.quantityRemaining) return res.status(400).json({ error: `Số lượng không hợp lệ (tồn ${batch.quantityRemaining})` })
   // ảnh là data URL đã nén ở client; giới hạn ~2MB cho an toàn
   const photoUrl = typeof photo === 'string' && photo.startsWith('data:image') && photo.length < 6_000_000 ? photo : null
   const me = currentUser(req)
@@ -322,10 +360,12 @@ app.get('/api/distributions', requireAuth, requireRole('tnv', 'admin'), async (_
 // ===== TNV: Chi phí thực địa (gửi admin duyệt) =====
 app.post('/api/field-expenses', requireAuth, requireRole('tnv', 'admin'), async (req, res) => {
   const { campaignSlug, title, amount } = req.body
-  if (!title?.trim() || !amount) return res.status(400).json({ error: 'Thiếu nội dung hoặc số tiền' })
+  const amt = parseAmount(amount)
+  if (!title?.trim()) return res.status(400).json({ error: 'Thiếu nội dung khoản chi' })
+  if (!amt) return res.status(400).json({ error: 'Số tiền không hợp lệ' })
   const campaign = await db.campaign.findUnique({ where: { slug: campaignSlug } })
   if (!campaign) return res.status(404).json({ error: 'Không tìm thấy chiến dịch' })
-  const e = await db.expense.create({ data: { campaignId: campaign.id, title: title.trim(), amount: BigInt(amount), type: 'field_expense', status: 'pending', submittedById: currentUser(req).id } })
+  const e = await db.expense.create({ data: { campaignId: campaign.id, title: title.trim(), amount: amt, type: 'field_expense', status: 'pending', submittedById: currentUser(req).id } })
   res.json(e)
 })
 
