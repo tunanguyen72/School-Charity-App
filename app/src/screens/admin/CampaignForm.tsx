@@ -61,10 +61,10 @@ export default function CampaignForm() {
     finally { setBusy(false) }
   }
 
-  if (loading) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Sửa chiến dịch" back="/admin/campaigns" /><Loading /></div>
+  if (loading) return <div className="min-h-[100svh] app-canvas"><TopBar title="Sửa chiến dịch" back="/admin/campaigns" /><Loading /></div>
 
   return (
-    <div className="min-h-[100svh] bg-slate-50 pb-6">
+    <div className="min-h-[100svh] app-canvas pb-6">
       <TopBar title={editing ? 'Sửa chiến dịch' : 'Tạo chiến dịch'} back="/admin/campaigns" />
 
       <div className="pt-4">
@@ -82,14 +82,14 @@ export default function CampaignForm() {
         <Field label="Trạng thái">
           <div className="grid grid-cols-3 gap-2">
             {STATUSES.map((s) => (
-              <button key={s.v} onClick={() => setStatus(s.v)} className={`py-2.5 rounded-xl text-[13px] font-bold border-[1.5px] ${status === s.v ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-600'}`}>{s.l}</button>
+              <button key={s.v} onClick={() => setStatus(s.v)} className={`py-2.5 rounded-xl text-[13px] font-bold border-[1.5px] ${status === s.v ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-ink-600'}`}>{s.l}</button>
             ))}
           </div>
         </Field>
 
         <div className="flex gap-3 px-5 mb-3">
-          <label className="flex-1"><span className="block text-[13px] font-semibold text-slate-600 mb-1.5">Mục tiêu (đồng)</span><input className={inputCls} inputMode="numeric" placeholder="200000000" value={goal} onChange={(e) => setGoal(e.target.value.replace(/\D/g, ''))} /></label>
-          <label className="flex-1"><span className="block text-[13px] font-semibold text-slate-600 mb-1.5">Số trẻ hỗ trợ</span><input className={inputCls} inputMode="numeric" placeholder="45" value={children} onChange={(e) => setChildren(e.target.value.replace(/\D/g, ''))} /></label>
+          <label className="flex-1"><span className="block text-[13px] font-semibold text-ink-600 mb-1.5">Mục tiêu (đồng)</span><input className={inputCls} inputMode="numeric" placeholder="200000000" value={goal} onChange={(e) => setGoal(e.target.value.replace(/\D/g, ''))} /></label>
+          <label className="flex-1"><span className="block text-[13px] font-semibold text-ink-600 mb-1.5">Số trẻ hỗ trợ</span><input className={inputCls} inputMode="numeric" placeholder="45" value={children} onChange={(e) => setChildren(e.target.value.replace(/\D/g, ''))} /></label>
         </div>
 
         <Field label="Ngày kết thúc"><input type="date" className={inputCls} value={endDate} onChange={(e) => setEndDate(e.target.value)} /></Field>
@@ -97,12 +97,12 @@ export default function CampaignForm() {
 
         {/* Milestones */}
         <div className="px-5 mb-2 flex items-center justify-between">
-          <span className="text-[13px] font-semibold text-slate-600">Lộ trình triển khai</span>
+          <span className="text-[13px] font-semibold text-ink-600">Lộ trình triển khai</span>
           <button onClick={addMs} className="text-[12px] font-bold text-brand-700 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Thêm mốc</button>
         </div>
         <div className="px-4 space-y-2 mb-3">
           {milestones.map((m, i) => (
-            <div key={i} className="bg-white rounded-2xl p-3 border border-slate-100">
+            <div key={i} className="bg-white rounded-2xl p-3 ring-1 ring-slate-900/5 shadow-soft">
               <div className="flex gap-2">
                 <input className={inputCls + ' flex-1'} placeholder="Tên mốc (VD: Khởi công)" value={m.label} onChange={(e) => setMs(i, { label: e.target.value })} />
                 <button onClick={() => rmMs(i)} className="w-9 h-9 shrink-0 rounded-xl bg-rose-50 text-rose-500 grid place-items-center"><X className="w-4 h-4" /></button>
@@ -115,7 +115,7 @@ export default function CampaignForm() {
               </div>
             </div>
           ))}
-          {milestones.length === 0 && <p className="text-[12px] text-slate-400 px-1">Chưa có mốc nào (tuỳ chọn).</p>}
+          {milestones.length === 0 && <p className="text-[12px] text-ink-400 px-1">Chưa có mốc nào (tuỳ chọn).</p>}
         </div>
 
         {err && <div className="text-rose-600 text-[13px] text-center px-5 mb-2">{err}</div>}

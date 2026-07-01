@@ -18,10 +18,10 @@ export default function AdminHome() {
   const o = stats?.overview
 
   return (
-    <div className="min-h-[100svh] bg-slate-50 pb-6">
+    <div className="min-h-[100svh] app-canvas pb-6">
       <TopBar title="Bảng quản trị" right={<ShieldCheck className="w-5 h-5 text-emerald-500" />} />
 
-      <div className="mx-4 mt-4 rounded-3xl p-5 text-white bg-gradient-to-br from-brand-600 to-brand-900 shadow-xl shadow-brand-700/30">
+      <div className="mx-4 mt-4 rounded-3xl p-5 text-white bg-gradient-to-br from-brand-600 to-brand-900 shadow-float">
         <div className="text-[13px] text-white/80">Tổng quan hệ thống</div>
         <div className="grid grid-cols-3 gap-2 mt-3">
           {[[`${(o?.campaignsActive ?? 0) + (o?.campaignsDone ?? 0)}`, 'CHIẾN DỊCH'], [vndShort(o?.totalRaised ?? 0), 'TỔNG QUỸ'], [`${o?.donorCount ?? 0}`, 'NGƯỜI GÓP']].map(([a, b]) => (
@@ -30,14 +30,14 @@ export default function AdminHome() {
         </div>
       </div>
 
-      <h2 className="text-base font-extrabold text-slate-800 px-5 mt-5 mb-2">Chức năng quản trị</h2>
+      <h2 className="text-base font-extrabold text-ink-900 px-5 mt-5 mb-2">Chức năng quản trị</h2>
       <div className="px-4 space-y-3">
         {sections.map((s) => {
           const Icon = s.icon
           return (
             <Card key={s.to} className="!p-4 flex items-center gap-3" onClick={() => nav(s.to)}>
               <span className={`w-11 h-11 rounded-2xl grid place-items-center ${s.tone}`}><Icon className="w-5 h-5" /></span>
-              <div className="flex-1"><div className="font-bold text-slate-800">{s.label}</div><div className="text-[12px] text-slate-400">{s.desc}</div></div>
+              <div className="flex-1"><div className="font-bold text-ink-900">{s.label}</div><div className="text-[12px] text-ink-400">{s.desc}</div></div>
               <ChevronRight className="w-5 h-5 text-slate-300" />
             </Card>
           )

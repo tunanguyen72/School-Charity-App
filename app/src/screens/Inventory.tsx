@@ -21,10 +21,10 @@ export default function Inventory() {
   const given = total - stored
 
   return (
-    <div className="min-h-[100svh] bg-slate-50">
+    <div className="min-h-[100svh] app-canvas">
       <TopBar title="Kho hiện vật" right={<button onClick={() => nav('/inventory/receive')} className="p-1.5 rounded-full bg-brand-600 text-white active:scale-95"><Plus className="w-5 h-5" /></button>} />
 
-      <div className="mx-4 mt-4 rounded-3xl p-5 text-white bg-gradient-to-br from-brand-500 to-brand-800 shadow-xl shadow-brand-700/30">
+      <div className="mx-4 mt-4 rounded-3xl p-5 text-white bg-gradient-to-br from-brand-500 to-brand-800 shadow-float">
         <div className="text-[13px] text-white/80">Tổng hiện vật</div>
         <div className="text-[34px] font-extrabold leading-none mt-1">{total} <span className="text-base font-medium">đơn vị</span></div>
         <div className="grid grid-cols-3 gap-2 mt-4 bg-white/10 rounded-2xl p-3">
@@ -34,7 +34,7 @@ export default function Inventory() {
         </div>
       </div>
 
-      <h2 className="text-base font-extrabold text-slate-800 px-5 mt-5 mb-2">Các lô hiện vật</h2>
+      <h2 className="text-base font-extrabold text-ink-900 px-5 mt-5 mb-2">Các lô hiện vật</h2>
 
       {loading && <Loading />}
       {error && <ErrorBox message={error} />}
@@ -46,16 +46,16 @@ export default function Inventory() {
           return (
             <Card key={b.id} className={b.status === 'given' ? 'opacity-80' : ''}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 font-bold text-slate-800">
+                <div className="flex items-center gap-2 font-bold text-ink-900">
                   {b.photoUrl ? <img src={b.photoUrl} alt="" className="w-8 h-8 rounded-lg object-cover" /> : <span className="text-xl">{emojiFor(b.category)}</span>}
                   {b.name}
                 </div>
                 <Badge tone={sm.tone}>{sm.label}</Badge>
               </div>
-              <div className="text-xs text-slate-400 mt-1.5">Người tặng: {b.donorName}</div>
+              <div className="text-xs text-ink-400 mt-1.5">Người tặng: {b.donorName}</div>
               {b.status === 'partial' && <div className="mt-2"><Progress value={pct(gv, b.quantityTotal)} tone="bg-amber-500" /></div>}
               <div className="flex items-center justify-between mt-2">
-                <span className="text-[13px] text-slate-500">Tồn: <b className="text-slate-700">{b.quantityRemaining}/{b.quantityTotal} {b.unit}</b>{gv > 0 && b.status !== 'given' ? ` · đã trao ${gv}` : b.status === 'given' ? ' · đã trao hết' : ''}</span>
+                <span className="text-[13px] text-ink-500">Tồn: <b className="text-ink-700">{b.quantityRemaining}/{b.quantityTotal} {b.unit}</b>{gv > 0 && b.status !== 'given' ? ` · đã trao ${gv}` : b.status === 'given' ? ' · đã trao hết' : ''}</span>
                 {b.quantityRemaining > 0 && (
                   <button onClick={() => nav(`/inventory/distribute/${b.id}`)} className="text-brand-700 bg-brand-50 font-bold text-[13px] px-3 py-1.5 rounded-lg flex items-center gap-1 active:bg-brand-100">
                     Phân phối <ArrowRight className="w-3.5 h-3.5" />

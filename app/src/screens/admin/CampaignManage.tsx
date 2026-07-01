@@ -29,7 +29,7 @@ export default function CampaignManage() {
   }
 
   return (
-    <div className="min-h-[100svh] bg-slate-50 pb-6">
+    <div className="min-h-[100svh] app-canvas pb-6">
       <TopBar title="Quản lý chiến dịch" back="/admin"
         right={<button onClick={() => nav('/admin/campaigns/new')} className="p-1.5 rounded-full bg-brand-600 text-white active:scale-95"><Plus className="w-5 h-5" /></button>} />
 
@@ -44,14 +44,14 @@ export default function CampaignManage() {
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${c.gradient} grid place-items-center text-2xl shrink-0`}>{c.emoji}</div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-slate-800 text-sm leading-snug line-clamp-2">{c.title}</div>
-                  <div className="flex items-center gap-2 mt-1"><Badge tone={si.tone} className="!text-[9px] !px-1.5 !py-0.5">{si.label}</Badge><span className="text-[11px] text-slate-400">{vndShort(c.raised)} · {pct(c.raised, c.goal)}%</span></div>
+                  <div className="font-bold text-ink-900 text-sm leading-snug line-clamp-2">{c.title}</div>
+                  <div className="flex items-center gap-2 mt-1"><Badge tone={si.tone} className="!text-[9px] !px-1.5 !py-0.5">{si.label}</Badge><span className="text-[11px] text-ink-400">{vndShort(c.raised)} · {pct(c.raised, c.goal)}%</span></div>
                 </div>
               </div>
               {confirmSlug === c.id ? (
                 <div className="flex items-center gap-2 mt-3 bg-rose-50 rounded-xl p-2">
                   <span className="text-[12px] text-rose-600 flex-1 px-1">Xóa vĩnh viễn chiến dịch & mọi dữ liệu liên quan?</span>
-                  <button onClick={() => setConfirmSlug(null)} className="px-3 py-1.5 rounded-lg text-[13px] font-bold text-slate-500 bg-white">Hủy</button>
+                  <button onClick={() => setConfirmSlug(null)} className="px-3 py-1.5 rounded-lg text-[13px] font-bold text-ink-500 bg-white">Hủy</button>
                   <button onClick={() => del(c.id)} disabled={busy === c.id} className="px-3 py-1.5 rounded-lg text-[13px] font-bold text-white bg-rose-600 flex items-center gap-1">
                     {busy === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin-slow" /> : <Trash2 className="w-3.5 h-3.5" />} Xóa
                   </button>
@@ -65,7 +65,7 @@ export default function CampaignManage() {
             </Card>
           )
         })}
-        {list?.length === 0 && <p className="text-center text-slate-400 text-sm py-8">Chưa có chiến dịch nào. Bấm ＋ để tạo mới.</p>}
+        {list?.length === 0 && <p className="text-center text-ink-400 text-sm py-8">Chưa có chiến dịch nào. Bấm ＋ để tạo mới.</p>}
       </div>
     </div>
   )

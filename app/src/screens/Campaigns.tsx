@@ -25,16 +25,16 @@ export default function Campaigns() {
   const { data: list, loading, error } = useFetch(() => api.campaigns(f), [f])
 
   return (
-    <div className="min-h-[100svh] bg-slate-50">
+    <div className="min-h-[100svh] app-canvas">
       <TopBar title="Chiến dịch" right={<Bell className="w-5 h-5" />} />
       <div className="px-4 pt-4">
         <div className="relative">
-          <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-5 h-5 text-ink-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input className={inputCls + ' pl-11'} placeholder="Tìm kiếm chiến dịch..." />
         </div>
         <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
           {filters.map((x) => (
-            <button key={x.key} onClick={() => setF(x.key)} className={`shrink-0 px-4 py-2 rounded-full text-[13px] font-bold border transition ${f === x.key ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-500 border-slate-200'}`}>
+            <button key={x.key} onClick={() => setF(x.key)} className={`shrink-0 px-4 py-2 rounded-full text-[13px] font-bold transition-all ${f === x.key ? 'bg-brand-600 text-white shadow-brand' : 'bg-white text-ink-500 ring-1 ring-slate-200'}`}>
               {x.label}
             </button>
           ))}
@@ -49,16 +49,18 @@ export default function Campaigns() {
           const sb = statusBadge[c.status] ?? statusBadge.active
           const done = c.status === 'done'
           return (
-            <Card key={c.id} className="!p-3 overflow-hidden" onClick={() => nav(`/campaign/${c.id}`)}>
-              <div className={`relative h-32 -m-3 mb-3 bg-gradient-to-br ${c.gradient} grid place-items-center`}>
-                <span className="text-5xl">{c.emoji}</span>
-                <div className="absolute top-3 left-3"><Badge tone={sb.tone} className={c.status === 'urgent' ? '!bg-rose-500 !text-white' : ''}>{sb.label}</Badge></div>
+            <Card key={c.id} className="!p-3 overflow-hidden active:scale-[.99] transition" onClick={() => nav(`/campaign/${c.id}`)}>
+              <div className={`relative h-36 -m-3 mb-3 bg-gradient-to-br ${c.gradient} grid place-items-center overflow-hidden`}>
+                <div className="absolute -right-5 -top-7 w-24 h-24 rounded-full bg-white/15" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                <span className="text-6xl drop-shadow-lg relative">{c.emoji}</span>
+                <div className="absolute top-3 left-3"><Badge tone={sb.tone} className={c.status === 'urgent' ? '!bg-rose-500 !text-white !ring-0 shadow-lg' : '!bg-white/90 !ring-0 shadow'}>{sb.label}</Badge></div>
               </div>
-              <div className="font-bold text-slate-800 leading-snug">{c.title}</div>
-              <div className="mt-2"><Progress value={pct(c.raised, c.goal)} tone={done ? 'bg-emerald-500' : 'bg-brand-600'} /></div>
-              <div className="flex items-center justify-between mt-1.5 text-[13px]">
-                <span className={`font-bold ${done ? 'text-emerald-600' : 'text-brand-700'}`}>{vnd(c.raised)}</span>
-                <span className="text-slate-400">/ {vndShort(c.goal)} · {pct(c.raised, c.goal)}%</span>
+              <div className="font-bold text-ink-900 leading-snug">{c.title}</div>
+              <div className="mt-2.5"><Progress value={pct(c.raised, c.goal)} tone={done ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : undefined} /></div>
+              <div className="flex items-center justify-between mt-2 text-[13px]">
+                <span className={`font-extrabold ${done ? 'text-emerald-600' : 'text-brand-700'}`}>{vnd(c.raised)}</span>
+                <span className="text-ink-400">/ {vndShort(c.goal)} · {pct(c.raised, c.goal)}%</span>
               </div>
               {done ? (
                 <Button variant="ghost" className="mt-3">Xem kết quả</Button>
@@ -68,7 +70,7 @@ export default function Campaigns() {
             </Card>
           )
         })}
-        {!loading && list?.length === 0 && <p className="text-center text-slate-400 text-sm py-8">Không có chiến dịch nào.</p>}
+        {!loading && list?.length === 0 && <p className="text-center text-ink-400 text-sm py-8">Không có chiến dịch nào.</p>}
       </div>
     </div>
   )

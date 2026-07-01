@@ -47,15 +47,15 @@ export default function Distribute() {
     finally { setBusy(false) }
   }
 
-  if (loading) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Phân phối hiện vật" back="/inventory" /><Loading /></div>
-  if (!b) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Phân phối hiện vật" back="/inventory" /><ErrorBox message="Không tìm thấy lô hiện vật" /></div>
+  if (loading) return <div className="min-h-[100svh] app-canvas"><TopBar title="Phân phối hiện vật" back="/inventory" /><Loading /></div>
+  if (!b) return <div className="min-h-[100svh] app-canvas"><TopBar title="Phân phối hiện vật" back="/inventory" /><ErrorBox message="Không tìm thấy lô hiện vật" /></div>
 
   return (
-    <div className="min-h-[100svh] bg-slate-50">
+    <div className="min-h-[100svh] app-canvas">
       <TopBar title="Phân phối hiện vật" back="/inventory" />
-      <div className="mx-4 mt-4 bg-white rounded-2xl p-3 flex items-center gap-3 border border-slate-100">
+      <div className="mx-4 mt-4 bg-white rounded-2xl p-3 flex items-center gap-3 ring-1 ring-slate-900/5 shadow-soft">
         <span className="w-11 h-11 rounded-xl bg-brand-50 grid place-items-center text-xl">{emojiFor(b.category)}</span>
-        <div><div className="font-bold text-slate-800">{b.name}</div><div className="text-xs text-slate-400">Tồn kho: {b.quantityRemaining} {b.unit}</div></div>
+        <div><div className="font-bold text-ink-900">{b.name}</div><div className="text-xs text-ink-400">Tồn kho: {b.quantityRemaining} {b.unit}</div></div>
       </div>
 
       <div className="pt-4">
@@ -77,7 +77,7 @@ export default function Distribute() {
               <button onClick={() => { setPhoto(''); if (fileRef.current) fileRef.current.value = '' }} className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/55 text-white grid place-items-center"><X className="w-4 h-4" /></button>
             </div>
           ) : (
-            <button onClick={() => fileRef.current?.click()} className="w-full h-28 rounded-2xl border-2 border-dashed border-slate-300 grid place-items-center text-slate-400 bg-white active:bg-slate-50">
+            <button onClick={() => fileRef.current?.click()} className="w-full h-28 rounded-2xl border-2 border-dashed border-slate-300 grid place-items-center text-ink-400 bg-white active:bg-slate-50">
               {photoBusy ? <Loader2 className="w-7 h-7 animate-spin-slow" /> : <div className="text-center"><Camera className="w-7 h-7 mx-auto" /><span className="text-xs">Chụp / chọn ảnh trao tặng</span></div>}
             </button>
           )}

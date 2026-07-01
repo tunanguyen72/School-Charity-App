@@ -21,8 +21,8 @@ export default function Donate() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
-  if (loading) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Quyên góp" back /><Loading /></div>
-  if (error || !c) return <div className="min-h-[100svh] bg-slate-50"><TopBar title="Quyên góp" back /><ErrorBox message={error ?? 'Không tìm thấy'} /></div>
+  if (loading) return <div className="min-h-[100svh] app-canvas"><TopBar title="Quyên góp" back /><Loading /></div>
+  if (error || !c) return <div className="min-h-[100svh] app-canvas"><TopBar title="Quyên góp" back /><ErrorBox message={error ?? 'Không tìm thấy'} /></div>
 
   const proceed = async () => {
     setBusy(true); setErr('')
@@ -35,21 +35,21 @@ export default function Donate() {
   }
 
   return (
-    <div className="min-h-[100svh] bg-slate-50">
+    <div className="min-h-[100svh] app-canvas">
       <TopBar title="Quyên góp" back={`/campaign/${c.id}`} />
 
-      <div className="mx-4 mt-4 bg-white rounded-2xl p-3 flex items-center gap-3">
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${c.gradient} grid place-items-center text-2xl`}>{c.emoji}</div>
-        <div className="min-w-0"><div className="font-bold text-slate-800 text-sm truncate">{c.title}</div><div className="text-xs text-slate-400">📍 {c.location} · {pct(c.raised, c.goal)}%</div></div>
+      <div className="mx-4 mt-4 bg-white rounded-2xl p-3 flex items-center gap-3 ring-1 ring-slate-900/5 shadow-soft">
+        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${c.gradient} grid place-items-center text-2xl shadow-soft`}>{c.emoji}</div>
+        <div className="min-w-0"><div className="font-bold text-ink-900 text-sm truncate">{c.title}</div><div className="text-xs text-ink-400">📍 {c.location} · {pct(c.raised, c.goal)}%</div></div>
       </div>
 
-      <div className="mx-4 mt-4 grid grid-cols-2 bg-slate-200/70 rounded-2xl p-1">
-        <button onClick={() => setMode('cash')} className={`py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition ${mode === 'cash' ? 'bg-white text-brand-700 shadow' : 'text-slate-500'}`}><Banknote className="w-4 h-4" /> Tiền mặt</button>
-        <button onClick={() => setMode('inkind')} className={`py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition ${mode === 'inkind' ? 'bg-white text-brand-700 shadow' : 'text-slate-500'}`}><Package className="w-4 h-4" /> Hiện vật</button>
+      <div className="mx-4 mt-4 grid grid-cols-2 bg-white/70 ring-1 ring-slate-900/5 rounded-2xl p-1 shadow-soft">
+        <button onClick={() => setMode('cash')} className={`py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${mode === 'cash' ? 'bg-white text-brand-700 shadow-card' : 'text-ink-500'}`}><Banknote className="w-4 h-4" /> Tiền mặt</button>
+        <button onClick={() => setMode('inkind')} className={`py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${mode === 'inkind' ? 'bg-white text-brand-700 shadow-card' : 'text-ink-500'}`}><Package className="w-4 h-4" /> Hiện vật</button>
       </div>
 
       {mode === 'inkind' ? (
-        <div className="mx-5 mt-5 text-center text-slate-500 text-sm bg-white rounded-2xl p-6">
+        <div className="mx-5 mt-5 text-center text-ink-500 text-sm bg-white rounded-2xl p-6 ring-1 ring-slate-900/5 shadow-soft">
           <div className="text-3xl mb-2">📦</div>
           Quyên góp hiện vật được ghi nhận trực tiếp bởi tình nguyện viên tại điểm tiếp nhận. Vui lòng liên hệ để được hướng dẫn.
         </div>
@@ -58,7 +58,7 @@ export default function Donate() {
           <Field label="Chọn số tiền quyên góp">
             <div className="grid grid-cols-3 gap-2.5">
               {quickAmounts.map((a) => (
-                <button key={a} onClick={() => { setAmount(a); setCustom('') }} className={`py-3 rounded-2xl font-bold text-sm border-[1.5px] transition ${amount === a && !custom ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-600'}`}>
+                <button key={a} onClick={() => { setAmount(a); setCustom('') }} className={`py-3 rounded-2xl font-bold text-sm transition-all ${amount === a && !custom ? 'ring-2 ring-brand-500 bg-brand-50 text-brand-700 shadow-card' : 'ring-1 ring-slate-200 bg-white text-ink-600'}`}>
                   {vndShort(a)}
                 </button>
               ))}
@@ -73,12 +73,12 @@ export default function Donate() {
           </Field>
           <Field label="Hiển thị thông tin">
             <div className="grid grid-cols-2 gap-2.5">
-              <button onClick={() => setAnon(false)} className={`py-3 rounded-2xl text-sm font-semibold border-[1.5px] ${!anon ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-600'}`}>👤 Công khai tên</button>
-              <button onClick={() => setAnon(true)} className={`py-3 rounded-2xl text-sm font-semibold border-[1.5px] ${anon ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-600'}`}>🙈 Ẩn danh</button>
+              <button onClick={() => setAnon(false)} className={`py-3 rounded-2xl text-sm font-semibold transition-all ${!anon ? 'ring-2 ring-brand-500 bg-brand-50 text-brand-700 shadow-card' : 'ring-1 ring-slate-200 bg-white text-ink-600'}`}>👤 Công khai tên</button>
+              <button onClick={() => setAnon(true)} className={`py-3 rounded-2xl text-sm font-semibold transition-all ${anon ? 'ring-2 ring-brand-500 bg-brand-50 text-brand-700 shadow-card' : 'ring-1 ring-slate-200 bg-white text-ink-600'}`}>🙈 Ẩn danh</button>
             </div>
           </Field>
 
-          {err && <div className="text-rose-600 text-[13px] text-center px-5">{err}</div>}
+          {err && <div className="text-rose-600 text-[13px] text-center mx-5 bg-rose-50 rounded-xl py-2 ring-1 ring-rose-100">{err}</div>}
           <div className="px-5 pb-6 pt-1">
             <Button onClick={proceed} disabled={!amount || busy}>{busy ? <Loader2 className="w-5 h-5 animate-spin-slow" /> : `Tiếp tục — ${vnd(amount || 0)}`}</Button>
           </div>

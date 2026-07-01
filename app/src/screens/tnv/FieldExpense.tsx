@@ -36,11 +36,11 @@ export default function FieldExpense() {
   const pendingTotal = (list ?? []).filter((e) => e.status === 'pending').length
 
   return (
-    <div className="min-h-[100svh] bg-slate-50 pb-6">
+    <div className="min-h-[100svh] app-canvas pb-6">
       <TopBar title="Chi phí thực địa" back="/home" />
 
       <Card className="mx-4 mt-4 !p-4">
-        <div className="text-[13px] font-semibold text-slate-600 mb-2">Gửi đề nghị chi phí (admin sẽ duyệt)</div>
+        <div className="text-[13px] font-semibold text-ink-600 mb-2">Gửi đề nghị chi phí (admin sẽ duyệt)</div>
         <Field label="Chiến dịch">
           <select className={inputCls} value={slug} onChange={(e) => setSlug(e.target.value)}>
             {campaigns.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
@@ -53,11 +53,11 @@ export default function FieldExpense() {
       </Card>
 
       <div className="flex items-center justify-between px-5 mt-5 mb-2">
-        <h2 className="text-base font-extrabold text-slate-800">Đề nghị của tôi</h2>
+        <h2 className="text-base font-extrabold text-ink-900">Đề nghị của tôi</h2>
         {pendingTotal > 0 && <Badge tone="amber">{pendingTotal} chờ duyệt</Badge>}
       </div>
       {list === null && <Loading />}
-      {list?.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Chưa gửi đề nghị nào.</p>}
+      {list?.length === 0 && <p className="text-center text-ink-400 text-sm py-4">Chưa gửi đề nghị nào.</p>}
       <div className="px-4 space-y-2">
         {list?.map((e) => {
           const si = statusInfo[e.status] ?? statusInfo.pending
@@ -65,13 +65,13 @@ export default function FieldExpense() {
           return (
             <Card key={e.id} className="!p-3.5 flex items-center gap-3">
               <span className={`w-9 h-9 rounded-xl grid place-items-center ${e.status === 'verified' ? 'bg-emerald-100 text-emerald-600' : e.status === 'rejected' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}`}><Icon className="w-5 h-5" /></span>
-              <div className="flex-1 min-w-0"><b className="text-slate-800 text-sm">{e.title}</b><div className="text-xs text-slate-400 truncate">{e.campaign.title}</div></div>
+              <div className="flex-1 min-w-0"><b className="text-ink-900 text-sm">{e.title}</b><div className="text-xs text-ink-400 truncate">{e.campaign.title}</div></div>
               <div className="text-right"><b className="text-rose-600 text-[13px]">{vnd(Number(e.amount))}</b><div><Badge tone={si.tone} className="!text-[9px] !px-1.5 !py-0.5">{si.label}</Badge></div></div>
             </Card>
           )
         })}
       </div>
-      <p className="text-center text-[11px] text-slate-400 mt-4 px-8">Tổng đã được duyệt: {vndShort((list ?? []).filter((e) => e.status === 'verified').reduce((s, e) => s + Number(e.amount), 0))}</p>
+      <p className="text-center text-[11px] text-ink-400 mt-4 px-8">Tổng đã được duyệt: {vndShort((list ?? []).filter((e) => e.status === 'verified').reduce((s, e) => s + Number(e.amount), 0))}</p>
     </div>
   )
 }

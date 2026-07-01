@@ -19,20 +19,20 @@ export default function TnvHome() {
   const { data: f } = useFetch(() => api.myField(), [])
 
   return (
-    <div className="min-h-[100svh] bg-slate-50 pb-4">
+    <div className="min-h-[100svh] app-canvas pb-4">
       <div className="px-5 pt-5 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Avatar initials={user?.fullName?.split(' ').slice(-1)[0][0] ?? 'T'} />
           <div>
-            <div className="font-extrabold text-slate-800 leading-tight">Chào {user?.fullName ?? 'bạn'}!</div>
-            <div className="text-xs text-slate-400">Tình nguyện viên hiện trường</div>
+            <div className="font-extrabold text-ink-900 leading-tight">Chào {user?.fullName ?? 'bạn'}!</div>
+            <div className="text-xs text-ink-400">Tình nguyện viên hiện trường</div>
           </div>
         </div>
-        <button onClick={() => nav('/notifications')} className="relative p-2 rounded-full active:bg-slate-200"><Bell className="w-5 h-5 text-slate-600" /></button>
+        <button onClick={() => nav('/notifications')} className="relative p-2 rounded-full active:bg-slate-200"><Bell className="w-5 h-5 text-ink-600" /></button>
       </div>
 
       {/* Field stats */}
-      <div className="mx-4 rounded-3xl p-5 text-white bg-gradient-to-br from-emerald-500 to-teal-700 shadow-xl shadow-emerald-700/30">
+      <div className="mx-4 rounded-3xl p-5 text-white bg-gradient-to-br from-emerald-500 to-teal-700 shadow-float">
         <div className="text-[13px] text-white/80">Hoạt động hiện trường của tôi</div>
         <div className="grid grid-cols-3 gap-2 mt-3">
           {[[`${f?.batchesReceived ?? 0}`, 'LÔ ĐÃ NHẬN'], [`${f?.itemsGiven ?? 0}`, 'ĐÃ TRAO'], [`${f?.distributionCount ?? 0}`, 'LẦN PHÂN PHỐI']].map(([a, b]) => (
@@ -52,7 +52,7 @@ export default function TnvHome() {
           return (
             <Card key={a.label} className="!p-4 flex flex-col items-start gap-2" onClick={() => nav(a.to)}>
               <span className={`w-11 h-11 rounded-2xl grid place-items-center ${a.tone}`}><Icon className="w-5 h-5" /></span>
-              <div className="font-bold text-slate-800 text-sm">{a.label}</div>
+              <div className="font-bold text-ink-900 text-sm">{a.label}</div>
             </Card>
           )
         })}
@@ -60,12 +60,12 @@ export default function TnvHome() {
 
       <SectionTitle>Lần trao tặng gần đây</SectionTitle>
       <div className="mx-4 space-y-2">
-        {f?.recent.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Chưa có lần phân phối nào. Bắt đầu từ Kho hiện vật.</p>}
+        {f?.recent.length === 0 && <p className="text-center text-ink-400 text-sm py-4">Chưa có lần phân phối nào. Bắt đầu từ Kho hiện vật.</p>}
         {f?.recent.map((r) => (
           <Card key={r.id} className="!p-3 flex items-center gap-3">
             <span className="w-9 h-9 rounded-xl bg-brand-100 text-brand-600 grid place-items-center text-lg">📦</span>
-            <div className="flex-1 text-sm"><b>{r.qty} {r.unit} {r.item}</b><div className="text-xs text-slate-400">→ {r.to}</div></div>
-            <span className="text-[11px] text-slate-400">{new Date(r.at).toLocaleDateString('vi-VN')}</span>
+            <div className="flex-1 text-sm"><b>{r.qty} {r.unit} {r.item}</b><div className="text-xs text-ink-400">→ {r.to}</div></div>
+            <span className="text-[11px] text-ink-400">{new Date(r.at).toLocaleDateString('vi-VN')}</span>
           </Card>
         ))}
         <button onClick={() => nav('/distributions')} className="w-full flex items-center justify-center gap-1.5 text-brand-600 text-sm font-semibold py-2">Xem lịch sử phân phối đầy đủ <ArrowRight className="w-4 h-4" /></button>

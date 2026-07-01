@@ -37,7 +37,7 @@ export default function Receive() {
   }
 
   return (
-    <div className="min-h-[100svh] bg-slate-50">
+    <div className="min-h-[100svh] app-canvas">
       <TopBar title="Nhận hiện vật" back="/inventory" />
       <div className="pt-4">
         <Field label="Tên đồ vật"><input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} /></Field>
@@ -47,8 +47,8 @@ export default function Receive() {
           </select>
         </Field>
         <div className="flex gap-3 px-5 mb-3">
-          <label className="flex-1"><span className="block text-[13px] font-semibold text-slate-600 mb-1.5">Số lượng</span><input className={inputCls} value={quantity} onChange={(e) => setQuantity(e.target.value.replace(/\D/g, ''))} inputMode="numeric" /></label>
-          <label className="flex-1"><span className="block text-[13px] font-semibold text-slate-600 mb-1.5">Đơn vị</span><select className={inputCls} value={unit} onChange={(e) => setUnit(e.target.value)}><option>bộ</option><option>cái</option><option>kg</option></select></label>
+          <label className="flex-1"><span className="block text-[13px] font-semibold text-ink-600 mb-1.5">Số lượng</span><input className={inputCls} value={quantity} onChange={(e) => setQuantity(e.target.value.replace(/\D/g, ''))} inputMode="numeric" /></label>
+          <label className="flex-1"><span className="block text-[13px] font-semibold text-ink-600 mb-1.5">Đơn vị</span><select className={inputCls} value={unit} onChange={(e) => setUnit(e.target.value)}><option>bộ</option><option>cái</option><option>kg</option></select></label>
         </div>
         <Field label="Người tặng"><input className={inputCls} value={donorName} onChange={(e) => setDonorName(e.target.value)} /></Field>
         <Field label="Gắn vào chiến dịch">
@@ -64,7 +64,7 @@ export default function Receive() {
               <button onClick={() => { setPhoto(''); if (fileRef.current) fileRef.current.value = '' }} className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/55 text-white grid place-items-center"><X className="w-4 h-4" /></button>
             </div>
           ) : (
-            <button onClick={() => fileRef.current?.click()} className="w-full h-28 rounded-2xl border-2 border-dashed border-slate-300 grid place-items-center text-slate-400 bg-white active:bg-slate-50">
+            <button onClick={() => fileRef.current?.click()} className="w-full h-28 rounded-2xl border-2 border-dashed border-slate-300 grid place-items-center text-ink-400 bg-white active:bg-slate-50">
               {photoBusy ? <Loader2 className="w-7 h-7 animate-spin-slow" /> : <div className="text-center"><Camera className="w-7 h-7 mx-auto" /><span className="text-xs">Chụp / chọn ảnh hiện vật</span></div>}
             </button>
           )}

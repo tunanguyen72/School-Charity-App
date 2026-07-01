@@ -46,18 +46,18 @@ export default function QR() {
   const { draft } = useApp()
 
   return (
-    <div className="min-h-[100svh] bg-slate-50 flex flex-col">
+    <div className="min-h-[100svh] app-canvas flex flex-col">
       <TopBar title="Quét mã thanh toán" back={`/donate/${draft.campaignId}`} />
       <div className="flex-1 flex flex-col items-center px-6 pt-6 text-center">
-        <p className="text-slate-500 text-sm">Mở app ngân hàng và quét mã QR bên dưới để chuyển <b className="text-brand-700">{vnd(draft.amount)}</b></p>
+        <p className="text-ink-500 text-sm">Mở app ngân hàng và quét mã QR bên dưới để chuyển <b className="text-brand-700">{vnd(draft.amount)}</b></p>
 
-        <div className="mt-5 p-4 bg-white rounded-3xl shadow-lg shadow-slate-200 border border-slate-100">
+        <div className="mt-5 p-4 bg-white rounded-3xl shadow-lg shadow-slate-200 ring-1 ring-slate-900/5 shadow-soft">
           <PseudoQR seed={draft.txnCode} />
         </div>
 
         <div className="mt-4 w-full max-w-xs bg-white rounded-2xl p-4 text-sm">
-          <div className="flex justify-between py-1.5 border-b border-dashed border-slate-200"><span className="text-slate-500">Mã giao dịch</span><b>{draft.txnCode}</b></div>
-          <div className="flex justify-between py-1.5"><span className="text-slate-500">Số tiền</span><b className="text-brand-700">{vnd(draft.amount)}</b></div>
+          <div className="flex justify-between py-1.5 border-b border-dashed border-slate-200"><span className="text-ink-500">Mã giao dịch</span><b>{draft.txnCode}</b></div>
+          <div className="flex justify-between py-1.5"><span className="text-ink-500">Số tiền</span><b className="text-brand-700">{vnd(draft.amount)}</b></div>
         </div>
 
         <div className="mt-4 text-[12px] text-brand-700 bg-brand-50 rounded-xl px-3 py-2.5 flex items-start gap-2 text-left">

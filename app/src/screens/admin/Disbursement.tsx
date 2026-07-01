@@ -60,17 +60,17 @@ export default function Disbursement() {
   const totalVerified = (expenses ?? []).filter((e) => e.status === 'verified').reduce((s, e) => s + Number(e.amount), 0)
 
   return (
-    <div className="min-h-[100svh] bg-slate-50 pb-4">
+    <div className="min-h-[100svh] app-canvas pb-4">
       <TopBar title="Giải ngân & chi phí" back="/admin" right={<ShieldCheck className="w-5 h-5 text-emerald-500" />} />
       <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(ev) => onReceipt(ev.target.files?.[0])} />
 
       <div className="grid grid-cols-3 gap-2 px-4 pt-4">
         {[[`${pending.length}`, 'CHỜ DUYỆT', 'text-amber-600'], [vndShort(totalVerified), 'ĐÃ GIẢI NGÂN', 'text-emerald-600'], [`${expenses?.length ?? 0}`, 'TỔNG KHOẢN', 'text-brand-700']].map(([a, b, c]) => (
-          <Card key={b} className="!p-3 text-center"><div className={`font-extrabold text-base ${c}`}>{a}</div><div className="text-[10px] text-slate-400 mt-0.5">{b}</div></Card>
+          <Card key={b} className="!p-3 text-center"><div className={`font-extrabold text-base ${c}`}>{a}</div><div className="text-[10px] text-ink-400 mt-0.5">{b}</div></Card>
         ))}
       </div>
 
-      <h2 className="text-base font-extrabold text-slate-800 px-5 mt-5 mb-2">Tạo khoản giải ngân</h2>
+      <h2 className="text-base font-extrabold text-ink-900 px-5 mt-5 mb-2">Tạo khoản giải ngân</h2>
       <Card className="mx-4 !p-4">
         <Field label="Chiến dịch">
           <select className={inputCls} value={slug} onChange={(e) => setSlug(e.target.value)}>
@@ -83,16 +83,16 @@ export default function Disbursement() {
         <div className="px-1"><Button onClick={create} disabled={creating}>{creating ? <Loader2 className="w-5 h-5 animate-spin-slow" /> : <><Plus className="w-4 h-4" /> Tạo khoản chi</>}</Button></div>
       </Card>
 
-      <h2 className="text-base font-extrabold text-slate-800 px-5 mt-5 mb-2">Chờ xác minh / duyệt</h2>
+      <h2 className="text-base font-extrabold text-ink-900 px-5 mt-5 mb-2">Chờ xác minh / duyệt</h2>
       {expenses === null && <Loading />}
-      {expenses && pending.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Không có khoản nào chờ xử lý 🎉</p>}
+      {expenses && pending.length === 0 && <p className="text-center text-ink-400 text-sm py-4">Không có khoản nào chờ xử lý 🎉</p>}
       <div className="px-4 space-y-2">
         {pending.map((e) => (
           <Card key={e.id} className="!p-3.5">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <b className="text-slate-800">{e.title}</b>
-                <div className="text-xs text-slate-400 mt-0.5">{e.campaign.title} · {typeLabel(e.type)} · {e.submittedBy.fullName}</div>
+                <b className="text-ink-900">{e.title}</b>
+                <div className="text-xs text-ink-400 mt-0.5">{e.campaign.title} · {typeLabel(e.type)} · {e.submittedBy.fullName}</div>
               </div>
               <b className="text-rose-600 shrink-0">-{vndShort(Number(e.amount))}</b>
             </div>
@@ -104,14 +104,14 @@ export default function Disbursement() {
                 {busyId === e.id ? <Loader2 className="w-3.5 h-3.5 animate-spin-slow" /> : <Camera className="w-3.5 h-3.5" />} Xác minh
               </button>
             </div>
-            <div className="text-[11px] text-slate-400 mt-2">📎 Bấm “Xác minh” để chụp/chọn ảnh chứng từ đính kèm.</div>
+            <div className="text-[11px] text-ink-400 mt-2">📎 Bấm “Xác minh” để chụp/chọn ảnh chứng từ đính kèm.</div>
           </Card>
         ))}
       </div>
 
       {resolved.length > 0 && (
         <>
-          <h2 className="text-base font-extrabold text-slate-800 px-5 mt-5 mb-2">Đã xử lý</h2>
+          <h2 className="text-base font-extrabold text-ink-900 px-5 mt-5 mb-2">Đã xử lý</h2>
           <div className="px-4 space-y-2">
             {resolved.map((e) => (
               <Card key={e.id} className="!p-3 flex items-center gap-3 opacity-90">
@@ -122,7 +122,7 @@ export default function Disbursement() {
                     {e.status === 'verified' ? <BadgeCheck className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                   </span>
                 )}
-                <div className="flex-1 min-w-0"><b className="text-slate-800 text-sm">{e.title}</b><div className="text-xs text-slate-400 truncate">{e.campaign.title}</div></div>
+                <div className="flex-1 min-w-0"><b className="text-ink-900 text-sm">{e.title}</b><div className="text-xs text-ink-400 truncate">{e.campaign.title}</div></div>
                 <div className="text-right">
                   <b className="text-rose-600 text-[13px]">-{vnd(Number(e.amount))}</b>
                   <div><Badge tone={e.status === 'verified' ? 'blue' : 'red'} className="!text-[9px] !px-1.5 !py-0.5">{e.status === 'verified' ? 'ĐÃ XÁC MINH' : 'TỪ CHỐI'}</Badge></div>
